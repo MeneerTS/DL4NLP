@@ -1,0 +1,18 @@
+name: dl4nlp
+channels:
+  - defaults
+  - pytorch
+  - anaconda
+  - conda-forge
+dependencies:
+  - python
+  - numpy==1.25.2
+  - pandas
+  - transformers
+  - pytorch
+  - lightning==2.2.1
+  - tqdm=4.66.1
+  - pip
+  - pip:
+    - lingua-language-detector
+    - wget
