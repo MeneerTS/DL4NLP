@@ -30,7 +30,9 @@ class NewsDataset(Dataset):
     def __getitem__(self, idx):
 
         article_dir = os.path.join(self.directory, self.data[idx])
-        text = get_article_text(article_dir, remove_p=True)
+        text = get_article_text(
+            article_dir, remove_h=False, remove_p=True, remove_n=False
+        )
 
         return text, 0  # For now I'll assume real article = 0
 

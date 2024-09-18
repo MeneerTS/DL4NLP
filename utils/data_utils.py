@@ -1,4 +1,5 @@
 import os, wget, tarfile
+from re import sub
 from tqdm import tqdm
 from pathlib import Path
 from utils.constants import *
@@ -79,13 +80,19 @@ def get_dir_depth(path: str):
     return len(path_components)
 
 
-def get_article_text(directory: str, remove_p: bool = False):
+def get_article_text(
+    directory: str,
+    remove_h: bool = True,
+    remove_p: bool = False,
+    remove_n: bool = True,
+):
     """
     Retrieves and cleans text from an article.
 
     Arguments:
     directory (str): The .txt article file.
     remove_p (bool): Whether to remove the <P> breaks in the text.
+    remove_p (bool): Whether to remove line breaks (\n) from the text.
 
     Returns:
     The contents of that article file, cleaned.
@@ -95,8 +102,12 @@ def get_article_text(directory: str, remove_p: bool = False):
         text = f.read()
 
     # Clean text
-    text = text.replace("<HEADLINE>\n", "")
-    text = text.replace("\n", " ")
+    if remove_h:
+        text = text.replace("<HEADLINE>\n", "")
+
+    # Removing \n
+    if remove_n:
+        text = text.replace("\n", " ")
 
     # Removing <P>
     if remove_p:
@@ -110,51 +121,79 @@ def clean_data(directory: str = DATA_PATH):
     Checks if all paragraphs in all folders are in the same language.
     Necessary because the News Commentary dataset has some faulty entries
     (i.e., many files have some English paragraphs).
-
     For now, these files will be removed (NOT IMPLEMENTED YET).
-
     Arguments:
     directory (str): Folder containing all the data.
     """
-    # Setting up the language detector
-    detector = (
-        LanguageDetectorBuilder.from_all_languages().with_low_accuracy_mode().build()
+    if os.path.isfile(DONE_DIR):
+        print("Files already cleaned.")
+        return
+
+    detector = LanguageDetectorBuilder.from_all_languages().build()
+    author_filter = r'<SOURCE\s+TRANSLATOR="[^"]+">'
+
+    # Count total files for overall progress
+    total_files = sum(
+        len([f for f in files if f.endswith(".txt")])
+        for root, _, files in os.walk(directory)
+        if get_dir_depth(root) > 1
     )
 
-    problem_counts = defaultdict(int)
+    with tqdm(total=total_files, desc="Overall Progress") as pbar:
 
-    for dirpath, _, filenames in os.walk(directory):
+        for dirpath, _, filenames in os.walk(directory):
 
-        if get_dir_depth(dirpath) > 1:
-            # Get the language from the directory name
-            lang_code = dirpath[-2:]
-            lang_target = LANG_DICT[lang_code]
-            print(f"On folder: {lang_code}")
+            if get_dir_depth(dirpath) > 1:
+                lang_code = os.path.basename(dirpath)
+                lang_target = LANG_DICT.get(lang_code)
 
-            for filename in filenames:
-                if filename.endswith(".txt"):
+                if lang_target is None:
+                    print(f"Warning: Unknown language code {lang_code}")
+                    continue
 
-                    # Get the language from the directory name
-                    fullpath = os.path.join(dirpath, filename)
-                    text = get_article_text(fullpath)
-                    sentences = text.split("<P>")[1:]  # Ignore titles for now
+                for filename in filenames:
+                    if filename.endswith(".txt"):
+                        fullpath = os.path.join(dirpath, filename)
+                        try:
+                            text = get_article_text(fullpath)
 
-                    # print(fullpath)
-
-                    for sentence in sentences:
-
-                        if "<SOURCE" in sentence or sentence == " ":
+                        except Exception as e:
+                            print(f"Error reading file {fullpath}: {e}")
                             continue
 
-                        lang_curr = detector.detect_language_of(sentence)
-                        # print(sentence, "|", lang_curr)
-                        if lang_target != lang_curr:
-                            print(f"File contains more than 1 language. Removing...")
-                            problem_counts[lang_code] += 1
-                            break
+                        sentences = text.split(" <P> ")
+                        clean_sentences = []
 
-                    # print()
+                        for sentence in sentences:
 
-    print(problem_counts)
+                            # Extra cleanup for insurance
+                            sentence = sub("<P>", "", sentence)
 
-    return
+                            if "<SOURCE" in sentence:
+                                sentence = sub(author_filter, "", sentence)
+                            lang_curr = detector.detect_language_of(sentence)
+                            if (
+                                lang_target != lang_curr
+                                and lang_curr not in LANG_REL.get(lang_code, [])
+                                and lang_curr is not None
+                                and len(sentence) > 20
+                                and lang_target is not Language.ENGLISH
+                            ):
+                                continue
+                            clean_sentences.append(sentence)
+
+                        if clean_sentences:
+                            title = clean_sentences[0]
+                            text_content = "\n".join(clean_sentences[1:])
+                            full_text = f"{title}\n\n{text_content}"
+
+                            try:
+                                with open(fullpath, "w") as f:
+                                    f.write(full_text)
+                            except Exception as e:
+                                print(f"Error writing to file {fullpath}: {e}")
+
+                        pbar.update(1)
+
+    with open(DONE_DIR, "w") as f:
+        f.write("done")
