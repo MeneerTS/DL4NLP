@@ -9,7 +9,7 @@ model = GPTNeoForCausalLM.from_pretrained("EleutherAI/gpt-neo-125M")
 tokenizer.pad_token = tokenizer.eos_token #THIS IS HACKY DONT USE IT WITH LLAMA PLZ
 
 #Actual model:
-#from transformers import GPTNeoForCausalLM, AutoTokenizer
+#from transformers import AutoModel, AutoTokenizer
 #import torch
 #tokenizer = AutoTokenizer.from_pretrained("meta-llama/Meta-Llama-3.1-8B")
 #model = AutoModel.from_pretrained("meta-llama/Meta-Llama-3.1-8B")
