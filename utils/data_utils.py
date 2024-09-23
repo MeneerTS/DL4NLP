@@ -267,4 +267,4 @@ def count_document_lengths(directory: str = DATA_PATH):
 
                         pbar.update(1)
 
-    print("Total tokens:", total)
+    return total
