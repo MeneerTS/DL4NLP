@@ -1,9 +1,8 @@
-import os, wget, tarfile
-from re import sub
+import os, wget, tarfile, jieba, fugashi
+from re import sub, findall
 from tqdm import tqdm
 from pathlib import Path
 from utils.constants import *
-from collections import defaultdict
 from lingua import LanguageDetectorBuilder
 
 
@@ -172,6 +171,7 @@ def clean_data(directory: str = DATA_PATH):
                             if "<SOURCE" in sentence:
                                 sentence = sub(author_filter, "", sentence)
                             lang_curr = detector.detect_language_of(sentence)
+
                             if (
                                 lang_target != lang_curr
                                 and lang_curr not in LANG_REL.get(lang_code, [])
@@ -180,6 +180,7 @@ def clean_data(directory: str = DATA_PATH):
                                 and lang_target is not Language.ENGLISH
                             ):
                                 continue
+
                             clean_sentences.append(sentence)
 
                         if clean_sentences:
@@ -197,3 +198,73 @@ def clean_data(directory: str = DATA_PATH):
 
     with open(DONE_DIR, "w") as f:
         f.write("done")
+
+
+# Extra utils for getting dataset statistics
+def count_tokens_in_document(text, lang_code):
+    """
+    Counts the number of tokens in the given text, handling tokenization
+    for different languages appropriately.
+    Arguments:
+    text (str): The text to tokenize.
+    lang_code (str): The language code of the text.
+    Returns:
+    int: The number of tokens.
+    """
+    # For Chinese
+    if lang_code == "zh":
+        tokens = jieba.lcut(text)
+    # For Japanese
+    elif lang_code == "ja":
+        tagger = fugashi.Tagger()
+        tokens = [word.surface for word in tagger(text)]
+    # For other languages (split on whitespace and periods)
+    else:
+        # Split on whitespace and periods, keeping the periods
+        tokens = findall(r"\S+|\s+|\.", text)
+        # Remove empty strings from the result
+        tokens = [token for token in tokens if token.strip()]
+
+    return len(tokens)
+
+
+def count_document_lengths(directory: str = DATA_PATH):
+    """
+    Counts the lengths of all documents in terms of tokens in the folder,
+    handling different tokenization needs for Chinese and Japanese.
+
+    Arguments:
+    directory (str): Folder containing all the data.
+    """
+    # To hold the counts
+    total = 0
+
+    # Count total files for overall progress
+    total_files = sum(
+        len([f for f in files if f.endswith(".txt")])
+        for root, _, files in os.walk(directory)
+        if get_dir_depth(root) > 1
+    )
+
+    with tqdm(total=total_files, desc="Overall Progress") as pbar:
+
+        for dirpath, _, filenames in os.walk(directory):
+
+            if get_dir_depth(dirpath) > 1:
+                lang_code = os.path.basename(dirpath)
+
+                for filename in filenames:
+                    if filename.endswith(".txt"):
+                        fullpath = os.path.join(dirpath, filename)
+                        try:
+                            text = get_article_text(fullpath)
+                        except Exception as e:
+                            print(f"Error reading file {fullpath}: {e}")
+                            continue
+
+                        # Count the number of tokens in the document
+                        total += count_tokens_in_document(text, lang_code)
+
+                        pbar.update(1)
+
+    print("Total tokens:", total)
