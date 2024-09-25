@@ -1,7 +1,7 @@
 import os
 from torch.utils.data import Dataset
 from utils.constants import *
-from utils.data_utils import get_article_text
+from utils.dataUtils import get_article_text
 
 
 class NewsDataset(Dataset):

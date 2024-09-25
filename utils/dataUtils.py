@@ -191,6 +191,7 @@ def clean_data(directory: str = DATA_PATH):
                             try:
                                 with open(fullpath, "w") as f:
                                     f.write(full_text)
+
                             except Exception as e:
                                 print(f"Error writing to file {fullpath}: {e}")
 
@@ -201,13 +202,14 @@ def clean_data(directory: str = DATA_PATH):
 
 
 # Extra utils for getting dataset statistics
-def count_tokens_in_document(text, lang_code):
+def count_tokens_in_document(text, lang_code, use_period: bool = True):
     """
     Counts the number of tokens in the given text, handling tokenization
     for different languages appropriately.
     Arguments:
     text (str): The text to tokenize.
     lang_code (str): The language code of the text.
+    use_period (bool): Whether to count periods as words.
     Returns:
     int: The number of tokens.
     """
@@ -224,6 +226,10 @@ def count_tokens_in_document(text, lang_code):
         tokens = findall(r"\S+|\s+|\.", text)
         # Remove empty strings from the result
         tokens = [token for token in tokens if token.strip()]
+
+    # Period removal
+    if not use_period:
+        tokens = [token for token in tokens if token not in {".", "。", "．", "｡"}]
 
     return len(tokens)
 
