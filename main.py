@@ -1,4 +1,4 @@
-# STILL UNFINISHED, NEED TO IMPLEMENT FULL TRAINING LOOP
+# STILL UNFINISHED, NEED TO IMPLEMENT FULL TEST LOOP
 import torch, argparse
 from transformers import LlamaForCausalLM, AutoTokenizer
 
@@ -115,6 +115,10 @@ def prompt_model(prompts, model, tokenizer, device, args):
 if __name__ == "__main__":
 
     args = config()
+
+    # Current idea: This is the "batch" of articles to detect
+    # We mainly just need the model loader to get different models and
+    # use the (to be updated) dataloader to get the texts in a test loop
     prompts = [
         "Het is een nacht die je normaal alleen",
         "Je suis un baguette et tu est un",
