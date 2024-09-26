@@ -1,49 +1,55 @@
 import os
-import tarfile
 import shutil
-from pathlib import Path
 import random
+import json  # Import json module to parse JSON-formatted string
+from pathlib import Path
 
 # Define paths
 home = str(Path.home())
-desktop_path = os.path.join(home, "Desktop")
-download_path = os.path.join(home, "Downloads")
-# Paths for new folders on the desktop
+subsets_path = os.path.join(home, "DL4NLP/subsets")  # Target folder for subsets
+data_path = os.path.join(home, "DL4NLP/data")  # Source folder containing language folders
+articles_path = os.path.join(home, "DL4NLP/articles.txt")  # Path to the articles.txt file
+
+# Define paths for new folders within the 'subsets' folder
 folders = {
-    'en': os.path.join(desktop_path, 'en_files'),
-    'nl': os.path.join(desktop_path, 'nl_files'),
-    'it': os.path.join(desktop_path, 'it_files')
+    'en': os.path.join(subsets_path, 'en_files'),
+    'zh': os.path.join(subsets_path, 'zh_files'),
+    'de': os.path.join(subsets_path, 'de_files'),
+    'id': os.path.join(subsets_path, 'id_files'),
+    'ru': os.path.join(subsets_path, 'ru_files')
 }
 
-# Create new directories on the desktop
+# Create new directories in the subsets folder
 for folder in folders.values():
     os.makedirs(folder, exist_ok=True)
 
-documents_path = os.path.join(download_path, "documents.tgz")
-# Open the tar archive
-with tarfile.open(documents_path, "r:gz") as tar:
-    # Initialize dictionary to store file names for each language
-    file_names_by_lang = {}
-    for lang in ['en', 'nl', 'it']:
-        folder_path_in_tar = f"split/{lang}/"
-        # Get all .txt files in the language folder
-        file_names = [name for name in tar.getnames() if name.startswith(folder_path_in_tar) and name.endswith('.txt')]
-        # Extract the base file names (excluding the 'split/lang/' prefix)
-        base_file_names = [os.path.basename(name) for name in file_names]
-        file_names_by_lang[lang] = set(base_file_names)
-    # Find the common file names across all languages
-    common_file_names = set.intersection(*file_names_by_lang.values())
-    # Randomly select 50 common file names
-    selected_file_names = random.sample(common_file_names, min(len(common_file_names), 50))
-    # For each selected file name, extract and move the files
-    for file_name in selected_file_names:
-        for lang in ['en', 'nl', 'it']:
-            file_in_tar = f"split/{lang}/{file_name}"
-            tar.extract(file_in_tar, path="tmp")  # Extract to a temporary directory
-            source_file = os.path.join("tmp", file_in_tar)
-            dest_file = os.path.join(folders[lang], file_name)
-            shutil.move(source_file, dest_file)
+# Read and parse the list of articles from 'articles.txt'
+with open(articles_path, 'r') as file:
+    content = file.read()
+    # Parse the JSON-formatted string into a Python list
+    articles = json.loads(content)
 
-# Clean up the temporary directory
-shutil.rmtree("tmp")
-print("50 common files from 'en', 'nl', and 'it' have been moved to your desktop.")
+# Randomly select 50 articles
+num_articles_to_select = min(50, len(articles))
+selected_articles = random.sample(articles, num_articles_to_select)
+
+# For each language folder, copy the selected article files
+for lang in ['en', 'zh', 'de', 'id', 'ru']:
+    # Path to the current language folder in '../data'
+    lang_folder_path = os.path.join(data_path, f"{lang}")
+
+    # Check if the folder exists
+    if not os.path.exists(lang_folder_path):
+        print(f"Language folder {lang_folder_path} does not exist, skipping.")
+        continue
+
+    # Copy the selected articles to the destination folder
+    for article in selected_articles:
+        source_file = os.path.join(lang_folder_path, article)
+        dest_file = os.path.join(folders[lang], article)
+        if os.path.exists(source_file):
+            shutil.copy(source_file, dest_file)
+        else:
+            print(f"Article {article} does not exist in language {lang}, skipping.")
+
+print("Randomly selected files have been copied to the subsets folder for each language.")

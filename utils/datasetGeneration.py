@@ -4,100 +4,132 @@ from transformers import pipeline
 import torch
 from tqdm import tqdm
 
-# Set up the pipeline with the Hugging Face token
+# Set up the pipeline (add your Hugging Face token if required)
 model_id = "meta-llama/Meta-Llama-3.1-8B-Instruct"
 pipe = pipeline(
     "text-generation",
     model=model_id,
     model_kwargs={"torch_dtype": torch.bfloat16},
     device="cuda",
-    token=".."  # Your HF token
+    token="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"
 )
 
-language = 'nl'
+# List of languages to process
+languages = ['en', 'zh', 'de', 'id', 'ru']
 
-# Define the source and destination directories
-source_dir = f'../../dataset/human/{language}_files'
-destination_dir = f'../../dataset/machine/{language}_files'
-
-# Create the destination directory if it doesn't exist
-os.makedirs(destination_dir, exist_ok=True)
-
-# Function to extract the title and first sentence from the text
-def extract_title_and_sentence(text):
-    # Extract title after <HEADLINE>
-    title_match = re.search(r"<HEADLINE>(.*?)<P>", text, re.DOTALL)
-    title = title_match.group(1).strip() if title_match else "No Title Found"
-    
-    # Extract first sentence after <P> (until a dot is found)
-    sentence_match = re.search(r"<P>(.*?\.)", text, re.DOTALL)
-    sentence = sentence_match.group(1).strip() if sentence_match else "No Sentence Found"
-    
-    return title, sentence
-
-# Loop through all .txt files in the source directory
-# for file_name in os.listdir(source_dir):
-for file_name in tqdm(os.listdir(source_dir), desc="Processing files", unit="file"):
-    if file_name.endswith(".txt"):
-        file_path = os.path.join(source_dir, file_name)
-        
-        # Read the content of the file
-        with open(file_path, 'r', encoding='utf-8') as file:
-            text = file.read()
-
-        article_length = len(text.split())
-        
-        # Extract the title and the first sentence
-        title, sentence = extract_title_and_sentence(text)
-        
-        # Define the prompt for text generation
-
-        if language == 'en':
-            messages = [
-                {"role": "user", "content": f"Write a news article with the following headline in English: '{title}'."
-                                            f"Start your article with the following sentence: '{sentence}'"
-                                            "Do not include separate headlines in the article."
-                                            f"The article has to be around {article_length} words."},
-            ]
-
-        elif language == 'nl':
-            messages = [
-                {"role": "user", "content": f"Schijf een nieuwsartikel met de volgende titel: '{title}'."
-                                            f"Begin je artikel met de volgende zin: '{sentence}'"
-                                            "Voeg geen aparte koppen toe aan het artikel"
-                                            f"Het artikel moet maximal 100 meer of minder dan {article_length} woorden bevatten."},
-            ]
-        
-        elif language == 'it':
-            messages = [
-                {"role": "user", "content": f"Scrivi un articolo di notizie con il seguente titolo: '{title}'."
-                                        f"Inizia il tuo articolo con la seguente frase: '{sentence}'."
-                                        "Non includere titoli separati nell'articolo."
-                                        f"L'articolo deve essere di circa {article_length} parole."},
-            ]
-        
-        # Define terminators (EOS tokens)
-        terminators = [
-            pipe.tokenizer.eos_token_id,
-            pipe.tokenizer.convert_tokens_to_ids("<|eot_id|>")
+# Mapping from language codes to language-specific settings
+language_settings = {
+    'en': {
+        'name': 'english',
+        'prompt': lambda title, sentence, article_length: [
+            {"role": "user", "content": f"Write a news article with the following headline in English: '{title}'. "
+                                        f"Start your article with the following sentence: '{sentence}'. "
+                                        "Do not include separate headlines in the article. "
+                                        f"The article has to be around {article_length} words."}
         ]
+    },
+    'zh': {
+        'name': 'chinese',
+        'prompt': lambda title, sentence, article_length: [
+            {"role": "user", "content": f"用以下标题写一篇新闻文章: '{title}'。"
+                                        f"用以下句子开始你的文章: '{sentence}'。"
+                                        "不要在文章中包含单独的标题。"
+                                        f"文章大约需要 {article_length} 字。"}
+        ]
+    },
+    'de': {
+        'name': 'german',
+        'prompt': lambda title, sentence, article_length: [
+            {"role": "user", "content": f"Schreiben Sie einen Nachrichtenartikel mit der folgenden Überschrift: '{title}'. "
+                                        f"Beginnen Sie Ihren Artikel mit folgendem Satz: '{sentence}'. "
+                                        "Fügen Sie keine separaten Überschriften in den Artikel ein. "
+                                        f"Der Artikel sollte ungefähr {article_length} Wörter enthalten."}
+        ]
+    },
+    'id': {
+        'name': 'indonesian',
+        'prompt': lambda title, sentence, article_length: [
+            {"role": "user", "content": f"Tulislah artikel berita dengan judul berikut: '{title}'. "
+                                        f"Mulailah artikel Anda dengan kalimat berikut: '{sentence}'. "
+                                        "Jangan sertakan judul terpisah dalam artikel. "
+                                        f"Artikel tersebut harus sekitar {article_length} kata."}
+        ]
+    },
+    'ru': {
+        'name': 'russian',
+        'prompt': lambda title, sentence, article_length: [
+            {"role": "user", "content": f"Напишите новостную статью со следующим заголовком: '{title}'. "
+                                        f"Начните свою статью со следующего предложения: '{sentence}'. "
+                                        "Не включайте отдельные заголовки в статью. "
+                                        f"Статья должна содержать около {article_length} слов."}
+        ]
+    },
+}
 
-        # Generate the article using the model
-        outputs = pipe(
-            messages,
-            max_new_tokens=2000,
-            eos_token_id=terminators,
-            do_sample=True,
-            temperature=0.6,
-            top_p=0.9,
-        )
-        
-        # Extract the generated text
-        assistant_response = outputs[0]["generated_text"][-1]["content"]
+# Loop over each language
+for language in languages:
+    lang_name = language_settings[language]['name']
+    
+    # Define the source and destination directories
+    home = str(Path.home())
+    source_dir = os.path.join(home, f"dataset/human/{language}_files")
+    destination_dir = os.path.join(home, f"dataset/machine/{language}_files")
 
-        # Save the generated article in the destination folder
-        output_file_path = os.path.join(destination_dir, file_name)
-        with open(output_file_path, 'w', encoding='utf-8') as output_file:
-            output_file.write(f"{title}\n\n{assistant_response}")
+    # Create the destination directory if it doesn't exist
+    os.makedirs(destination_dir, exist_ok=True)
 
-print(f"Article generation complete. Files saved in 'dataset/machine/{language}_files'.")
+    # Function to extract the title and first sentence from the text
+    def extract_title_and_sentence(text):
+        # Extract title after <HEADLINE>
+        title_match = re.search(r"<HEADLINE>(.*?)<P>", text, re.DOTALL)
+        title = title_match.group(1).strip() if title_match else "No Title Found"
+
+        # Extract first sentence after <P> (until a dot is found)
+        sentence_match = re.search(r"<P>(.*?\.)", text, re.DOTALL)
+        sentence = sentence_match.group(1).strip() if sentence_match else "No Sentence Found"
+
+        return title, sentence
+
+    # Loop through all .txt files in the source directory
+    for file_name in tqdm(os.listdir(source_dir), desc=f"Processing files for {lang_name}", unit="file"):
+        if file_name.endswith(".txt"):
+            file_path = os.path.join(source_dir, file_name)
+
+            # Read the content of the file
+            with open(file_path, 'r', encoding='utf-8') as file:
+                text = file.read()
+
+            article_length = len(text.split())
+
+            # Extract the title and the first sentence
+            title, sentence = extract_title_and_sentence(text)
+
+            # Get the prompt messages for the current language
+            messages = language_settings[language]['prompt'](title, sentence, article_length)
+
+            # Define terminators (EOS tokens)
+            terminators = [
+                pipe.tokenizer.eos_token_id,
+                pipe.tokenizer.convert_tokens_to_ids("<|eot_id|>")
+            ]
+
+            # Generate the article using the model
+            outputs = pipe(
+                messages,
+                max_new_tokens=2000,
+                eos_token_id=terminators,
+                do_sample=True,
+                temperature=0.6,
+                top_p=0.9,
+            )
+
+            # Extract the generated text
+            assistant_response = outputs[0]["generated_text"]
+
+            # Save the generated article in the destination folder
+            output_file_path = os.path.join(destination_dir, file_name)
+            with open(output_file_path, 'w', encoding='utf-8') as output_file:
+                output_file.write(f"{title}\n\n{assistant_response}")
+
+    print(f"Article generation complete for {lang_name}. Files saved in 'dataset/machine/{language}_files'.")
+
