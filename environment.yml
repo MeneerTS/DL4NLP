@@ -9,10 +9,17 @@ dependencies:
   - numpy==1.25.2
   - pandas
   - transformers
-  - pytorch
+  - pytorch=2.1.0
   - lightning==2.2.1
   - tqdm=4.66.1
   - pip
   - pip:
     - lingua-language-detector
     - wget
+    - sentencepiece # For LlaMA tokenizer
+    - git+https://github.com/modelscope/modelscope.git # For PolyLM
+    - accelerate # For PolyLM
+    - einops # For PolyLM
+    - protobuf # For PolyLM
+    # # For mT5
+    # - sentencepiece

@@ -164,7 +164,13 @@ cython_debug/
 # Data
 data/documents.tgz
 data/**/
+*.zip
+/human
+
+# Config files
+/.vscode
 
 # Miscellaneous
-test.ipynb
+test.*
 done.txt
+articles.txt

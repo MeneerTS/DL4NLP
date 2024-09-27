@@ -87,13 +87,13 @@ def extract_title_and_sentence(text):
 
 def generate_text(args):
 
-    # Set up the pipeline with the Hugging Face token
+    # Set up the pipeline with the Hugging Face token (if needed)
     pipe = pipeline(
         "text-generation",
         model=args.model_id,
         model_kwargs={"torch_dtype": torch.bfloat16},
         device=args.device,
-        token=args.hf_token,  # Your HF token
+        token=args.hf_token,
     )
 
     # Define the source and destination directories

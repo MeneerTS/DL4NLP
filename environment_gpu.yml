@@ -1,0 +1,26 @@
+name: dl4nlp_gpu
+channels:
+  - pytorch
+  - anaconda
+  - conda-forge
+  - defaults
+  - nvidia
+dependencies:
+  - python==3.11.9
+  - numpy==1.25.2
+  - pytorch-cuda=11.8
+  - torchvision
+  - pandas
+  - tqdm=4.66.1
+  - transformers
+  - pip
+  - pip:
+      - lingua-language-detector
+      - wget
+      - sentencepiece
+      - git+https://github.com/modelscope/modelscope.git
+      - accelerate
+      - einops
+      - protobuf
+  # - nvidia::cudatoolkit
+  # - pytorch
