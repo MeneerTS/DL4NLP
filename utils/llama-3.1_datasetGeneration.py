@@ -38,8 +38,8 @@ language_settings = {
         'prompt': lambda title, sentence, article_length: [
             {"role": "user", "content": f"用以下标题写一篇新闻文章: '{title}'。"
                                         f"用以下句子开始你的文章: '{sentence}'。"
-                                        "不要在文章中包含单独的标题。"
-                                        f"文章的长度应大约为 {article_length} 字，最大差异为 100 字。"}
+                                        "不要打印标题，也不要在文章中包含单独的标题。"
+                                        f"文章的长度应大约为 {article_length} 字符，最大差异为 50 字符。"}
         ]
     },
     'de': {
@@ -78,7 +78,7 @@ for language in languages:
     # Define the source and destination directories
     home = str(Path.home())
     source_dir = os.path.join(home, f"dataset/human/{language}_files")
-    destination_dir = os.path.join(home, f"dataset/machine/{language}_files")
+    destination_dir = os.path.join(home, f"dataset/machine/llama-3.1-8B/{language}_files")
 
     # Create the destination directory if it doesn't exist
     os.makedirs(destination_dir, exist_ok=True)
@@ -89,14 +89,19 @@ for language in languages:
         lines = text.strip().split('\n')
         
         # The title is the first non-empty line
-        title = lines[0].strip() if lines else "No Title Found"
+        title = lines[0].strip() if lines else ""
         
         # Find the first sentence in the remaining text
         remaining_text = ' '.join(lines[1:]).strip()  # Join everything after the title
-        sentence_match = re.search(r'([^.]*?\.)', remaining_text)
+
+        if language == 'zh':
+            sentence_match = re.search(r'([^。！？]*[。！？])', remaining_text) # Typical Chinese punctuation
+        
+        else:
+            sentence_match = re.search(r'([^.]*?\.)', remaining_text)
         
         # Get the first sentence or a default message if not found
-        sentence = sentence_match.group(1).strip() if sentence_match else "No Sentence Found"
+        sentence = sentence_match.group(1).strip() if sentence_match else "No sentence found"
         
         return title, sentence
 
@@ -109,7 +114,12 @@ for language in languages:
             with open(file_path, 'r', encoding='utf-8') as file:
                 text = file.read()
 
-            article_length = len(text.split())
+            if language == 'zh':
+                # Count num of characters (without blank spaces) for the Chinese prompt
+                article_length = len(text.replace(" ", "").replace("\n", "").replace("\t", "")) 
+
+            else:
+                article_length= len(text.split())
 
             # Extract the title and the first sentence
             title, sentence = extract_title_and_sentence(text)
@@ -126,7 +136,7 @@ for language in languages:
             # Generate the article using the model
             outputs = pipe(
                 messages,
-                max_new_tokens=2000,
+                max_new_tokens=4000,
                 eos_token_id=terminators,
                 do_sample=True,
                 temperature=0.6,
@@ -141,5 +151,5 @@ for language in languages:
             with open(output_file_path, 'w', encoding='utf-8') as output_file:
                 output_file.write(f"{title}\n\n{assistant_response}")
 
-    print(f"Article generation complete for {lang_name}. Files saved in 'dataset/machine/{language}_files'.")
+    print(f"Article generation complete for {lang_name}. Files saved in 'dataset/machine/llama-3.1-8B/{language}_files'.")
 
