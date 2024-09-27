@@ -3,6 +3,11 @@ import re
 from transformers import pipeline
 import torch
 from tqdm import tqdm
+from pathlib import Path
+from dotenv import load_dotenv
+
+load_dotenv()
+token = os.getenv('HF_TOKEN')
 
 # Set up the pipeline (add your Hugging Face token if required)
 model_id = "meta-llama/Meta-Llama-3.1-8B-Instruct"
@@ -11,7 +16,7 @@ pipe = pipeline(
     model=model_id,
     model_kwargs={"torch_dtype": torch.bfloat16},
     device="cuda",
-    token="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"
+    token=token
 )
 
 # List of languages to process
@@ -25,7 +30,7 @@ language_settings = {
             {"role": "user", "content": f"Write a news article with the following headline in English: '{title}'. "
                                         f"Start your article with the following sentence: '{sentence}'. "
                                         "Do not include separate headlines in the article. "
-                                        f"The article has to be around {article_length} words."}
+                                        f"The article should be approximately {article_length} words, with the maximum difference of 100 words."}
         ]
     },
     'zh': {
@@ -34,7 +39,7 @@ language_settings = {
             {"role": "user", "content": f"用以下标题写一篇新闻文章: '{title}'。"
                                         f"用以下句子开始你的文章: '{sentence}'。"
                                         "不要在文章中包含单独的标题。"
-                                        f"文章大约需要 {article_length} 字。"}
+                                        f"文章的长度应大约为 {article_length} 字，最大差异为 100 字。"}
         ]
     },
     'de': {
@@ -43,7 +48,7 @@ language_settings = {
             {"role": "user", "content": f"Schreiben Sie einen Nachrichtenartikel mit der folgenden Überschrift: '{title}'. "
                                         f"Beginnen Sie Ihren Artikel mit folgendem Satz: '{sentence}'. "
                                         "Fügen Sie keine separaten Überschriften in den Artikel ein. "
-                                        f"Der Artikel sollte ungefähr {article_length} Wörter enthalten."}
+                                        f"Der Artikel sollte ungefähr {article_length} Wörter lang sein, mit einer maximalen Abweichung von 100 Wörtern."}
         ]
     },
     'id': {
@@ -52,7 +57,7 @@ language_settings = {
             {"role": "user", "content": f"Tulislah artikel berita dengan judul berikut: '{title}'. "
                                         f"Mulailah artikel Anda dengan kalimat berikut: '{sentence}'. "
                                         "Jangan sertakan judul terpisah dalam artikel. "
-                                        f"Artikel tersebut harus sekitar {article_length} kata."}
+                                        f"Artikel tersebut harus memiliki panjang sekitar {article_length} kata, dengan perbedaan maksimal 100 kata."}
         ]
     },
     'ru': {
@@ -61,7 +66,7 @@ language_settings = {
             {"role": "user", "content": f"Напишите новостную статью со следующим заголовком: '{title}'. "
                                         f"Начните свою статью со следующего предложения: '{sentence}'. "
                                         "Не включайте отдельные заголовки в статью. "
-                                        f"Статья должна содержать около {article_length} слов."}
+                                        f"Статья должна быть приблизительно {article_length} слов, с максимальной разницей в 100 слов."}
         ]
     },
 }
@@ -80,14 +85,19 @@ for language in languages:
 
     # Function to extract the title and first sentence from the text
     def extract_title_and_sentence(text):
-        # Extract title after <HEADLINE>
-        title_match = re.search(r"<HEADLINE>(.*?)<P>", text, re.DOTALL)
-        title = title_match.group(1).strip() if title_match else "No Title Found"
-
-        # Extract first sentence after <P> (until a dot is found)
-        sentence_match = re.search(r"<P>(.*?\.)", text, re.DOTALL)
+        # Split the text by lines
+        lines = text.strip().split('\n')
+        
+        # The title is the first non-empty line
+        title = lines[0].strip() if lines else "No Title Found"
+        
+        # Find the first sentence in the remaining text
+        remaining_text = ' '.join(lines[1:]).strip()  # Join everything after the title
+        sentence_match = re.search(r'([^.]*?\.)', remaining_text)
+        
+        # Get the first sentence or a default message if not found
         sentence = sentence_match.group(1).strip() if sentence_match else "No Sentence Found"
-
+        
         return title, sentence
 
     # Loop through all .txt files in the source directory
@@ -123,8 +133,8 @@ for language in languages:
                 top_p=0.9,
             )
 
-            # Extract the generated text
-            assistant_response = outputs[0]["generated_text"]
+            # Extract the generated text of the assistant
+            assistant_response = outputs[0]["generated_text"][1]['content']
 
             # Save the generated article in the destination folder
             output_file_path = os.path.join(destination_dir, file_name)
