@@ -1,7 +1,7 @@
 import os, torch, argparse
 from tqdm import tqdm
 from transformers import pipeline
-from utils.dataUtils import count_tokens_in_document, get_article_text
+from utils.dataUtils import count_tokens_in_document, get_article_text, extract_title_and_sentence
 
 
 def config():
@@ -58,32 +58,6 @@ def config():
     args = parser.parse_args()
 
     return args
-
-
-# # Function to extract the title and first sentence from the text
-# # (This is for the uncleaned files)
-# def extract_title_and_sentence(text):
-#     # Extract title after <HEADLINE>
-#     title_match = re.search(r"<HEADLINE>(.*?)<P>", text, re.DOTALL)
-#     title = title_match.group(1).strip() if title_match else "No Title Found"
-
-#     # Extract first sentence after <P> (until a dot is found)
-#     sentence_match = re.search(r"<P>(.*?\.)", text, re.DOTALL)
-#     sentence = (
-#         sentence_match.group(1).strip() if sentence_match else "No Sentence Found"
-#     )
-
-#     return title, sentence
-
-
-# This is for the cleaned files
-def extract_title_and_sentence(text):
-    # Extract title: First element in list
-    sentences = text.split("\n")
-    title, sentence = sentences[0], sentences[1]
-
-    return title, sentence
-
 
 def generate_text(args):
 

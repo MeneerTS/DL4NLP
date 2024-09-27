@@ -91,7 +91,7 @@ def get_article_text(
     Arguments:
     directory (str): The .txt article file.
     remove_p (bool): Whether to remove the <P> breaks in the text.
-    remove_p (bool): Whether to remove line breaks (\n) from the text.
+    remove_n (bool): Whether to remove line breaks (\n) from the text.
 
     Returns:
     The contents of that article file, cleaned.
@@ -274,3 +274,13 @@ def count_document_lengths(directory: str = DATA_PATH):
                         pbar.update(1)
 
     return total
+
+
+# For dataset generation
+def extract_title_and_sentence(text):
+    # Extract title: First element in list
+    sents = text.split("\n")
+    sents = list(filter(None, sents))
+    title, sentence = sents[0], sents[1]
+
+    return title, sentence

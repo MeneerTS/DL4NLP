@@ -12,6 +12,7 @@ dependencies:
   - pytorch=2.1.0
   - lightning==2.2.1
   - tqdm=4.66.1
+  - huggingface_hub
   - pip
   - pip:
     - lingua-language-detector
@@ -21,5 +22,7 @@ dependencies:
     - accelerate # For PolyLM
     - einops # For PolyLM
     - protobuf # For PolyLM
+    - jieba
+    - fugashi
     # # For mT5
     # - sentencepiece

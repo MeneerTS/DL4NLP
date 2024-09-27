@@ -169,6 +169,7 @@ data/**/
 
 # Config files
 /.vscode
+token.json
 
 # Miscellaneous
 test.*
