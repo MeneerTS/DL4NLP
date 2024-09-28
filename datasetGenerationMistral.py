@@ -19,21 +19,18 @@ def config():
     parser.add_argument(
         "--model_id",
         default="mistralai/Mistral-Small-Instruct-2409",
-        required=True,
         type=str,
         help="The LLM to use for generation",
     )
     parser.add_argument(
         "--device",
         default="cuda",
-        required=True,
         type=str,
         help="Which device to use",
     )
     parser.add_argument(
         "--languages",
         default=["en", "id", "zh", "de", "ru"],
-        required=True,
         type=str.lower,
         nargs="+",
         help="The desired languages to generate for",
@@ -41,14 +38,12 @@ def config():
     parser.add_argument(
         "--max_length",
         default=2000,
-        required=True,
         type=int,
         help="The max length of the model output per prompt in tokens",
     )
     parser.add_argument(
         "--temperature",
         default=0.6,
-        required=True,
         type=float,
         help="The model temperature for generation",
     )
@@ -165,6 +160,10 @@ def generate_text(args):
 
 
 if __name__ == "__main__":
+
     args = config()
     generate_text(args)
+
+    print("Cleaning files...")
     clean_mistral_articles(args.languages)
+    print("Cleaning done!\n")

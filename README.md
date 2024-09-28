@@ -70,6 +70,7 @@ python datasetGenerationQwen.py \
 ```
 
 _Note: To generate articles using LLaMA, GPT, and Mistral, you need an API token (a paid one in the case of GPT)._
+_Also, ensure that the folders containing the data are in the same directory as this README._
 
 
 To evaluate the generated datasets, run the following:

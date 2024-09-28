@@ -90,6 +90,7 @@ def get_article_text(
 
     Arguments:
     directory (str): The .txt article file.
+    remove_p (bool): Whether to remove the <HEADLINE> in the text.
     remove_p (bool): Whether to remove the <P> breaks in the text.
     remove_n (bool): Whether to remove line breaks (\n) from the text.
 

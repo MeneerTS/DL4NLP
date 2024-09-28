@@ -1,7 +1,11 @@
 import os, torch, argparse
 from tqdm import tqdm
 from transformers import pipeline
-from utils.dataUtils import count_tokens_in_document, get_article_text, extract_title_and_sentence
+from utils.dataUtils import (
+    count_tokens_in_document,
+    get_article_text,
+    extract_title_and_sentence,
+)
 
 
 def config():
@@ -10,54 +14,48 @@ def config():
     parser.add_argument(
         "--model_id",
         default="meta-llama/Meta-Llama-3.1-8B-Instruct",
-        required=True,
         type=str,
         help="The LLM to use for generation",
     )
     parser.add_argument(
         "--device",
         default="cuda",
-        required=True,
         type=str,
         help="Which device to use",
     )
     parser.add_argument(
         "--hf_token",
-        required=True,
         type=str,
         help="The HuggingFace token",
     )
     parser.add_argument(
         "--language",
         default="en",
-        required=True,
         type=str.lower,
         help="The desired language to generate for",
     )
     parser.add_argument(
         "--source_dir",
         default="",
-        required=True,
         type=str,
         help="The HuggingFace token",
     )
     parser.add_argument(
         "--max_length",
         default=2000,
-        required=True,
         type=int,
         help="The max length of the model output per prompt in tokens",
     )
     parser.add_argument(
         "--temperature",
         default=0.6,
-        required=True,
         type=float,
         help="The model temperature for generation",
     )
     args = parser.parse_args()
 
     return args
+
 
 def generate_text(args):
 
