@@ -1,11 +1,16 @@
-import os, torch, argparse
+import os, torch, argparse, json
 from tqdm import tqdm
+from huggingface_hub import login
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from utils.dataUtils import (
     count_tokens_in_document,
     get_article_text,
     extract_title_and_sentence,
 )
+
+with open("token.json") as f:
+    token = json.load(f)["token"]
+    login(token=token)
 
 
 def config():
@@ -65,7 +70,7 @@ def generate_text(args):
         trust_remote_code=True,
         torch_dtype=torch.bfloat16,
     )
-    tokenizer = AutoTokenizer.from_pretrained(args.model_id, use_fast=False)
+    tokenizer = AutoTokenizer.from_pretrained(args.model_id)
 
     # Loop over the languages
     for language in args.languages:
@@ -133,19 +138,29 @@ def generate_text(args):
                         f"文章字数不得超过或少于{article_length}，最多 100 字。",
                     )
 
+                messages = [
+                    {
+                        "role": "user",
+                        "content": input_doc,
+                    }
+                ]
+
                 # Tokenize the input
-                inputs = tokenizer(input_doc, return_tensors="pt").to(device)
+                input_ids = tokenizer.apply_chat_template(
+                    messages,
+                    tokenize=True,
+                    add_generation_prompt=True,
+                    return_tensors="pt",
+                ).to(device)
 
                 # Generate output
                 with torch.no_grad():
                     generate_ids = model.generate(
-                        inputs.input_ids,
-                        attention_mask=inputs.attention_mask,
+                        input_ids,
                         do_sample=True,
                         max_length=args.max_length,
                         temperature=args.temperature,
                         top_p=0.9,
-                        early_stopping=True,
                     )
 
                 # Decode the generated article
