@@ -56,3 +56,5 @@ DATA_PATH = "data"
 SPLIT_PATH = os.path.join(DATA_PATH, "split")
 TAR_PATH = os.path.join(DATA_PATH, "documents.tgz")
 DONE_DIR = os.path.join(DATA_PATH, "done.txt")
+QWEN_PATH = "qwen"
+MISTRAL_PATH = "mistral"

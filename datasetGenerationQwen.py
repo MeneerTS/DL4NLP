@@ -2,6 +2,7 @@ import os, torch, argparse, json
 from tqdm import tqdm
 from huggingface_hub import login
 from transformers import AutoModelForCausalLM, AutoTokenizer
+from utils.cleanGeneratedText import clean_qwen_articles
 from utils.dataUtils import (
     count_tokens_in_document,
     get_article_text,
@@ -169,3 +170,4 @@ def generate_text(args):
 if __name__ == "__main__":
     args = config()
     generate_text(args)
+    clean_qwen_articles(args.languages)
