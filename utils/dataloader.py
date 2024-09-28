@@ -61,6 +61,15 @@ class DetectionDataset(Dataset):
             for path in self.ai_paths
         ]
 
+        if self.sentence_mode:
+
+            real_texts = [
+                get_sample_sentence(text, self.n_sentences) for text in real_texts
+            ]
+            ai_texts = [
+                get_sample_sentence(text, self.n_sentences) for text in ai_texts
+            ]
+
         detect_gpt_data = {"original": real_texts, "sampled": ai_texts}
 
         return detect_gpt_data
