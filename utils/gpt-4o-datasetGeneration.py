@@ -1,11 +1,9 @@
-import os
-import re
-from transformers import pipeline
-import torch
+import torch, os, re
 from tqdm import tqdm
 from pathlib import Path
-from dotenv import load_dotenv
 from openai import OpenAI
+from transformers import pipeline
+from dotenv import load_dotenv
 
 load_dotenv()
 api_key = os.getenv('OPENAI_API_KEY')

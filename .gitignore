@@ -163,8 +163,17 @@ cython_debug/
 
 # Data
 data/documents.tgz
-data/**/
+/data
+*.zip
+/human
+/mistral
+/qwen
+
+# Config files
+/.vscode
+token.json
 
 # Miscellaneous
-test.ipynb
+test.*
 done.txt
+/old

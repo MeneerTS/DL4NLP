@@ -51,8 +51,30 @@ LANG_REL = {
     "zh": [],
 }
 
+# 15 colorblind-friendly colors for plotting
+COLORS = [
+    "#0072B2",
+    "#009E73",
+    "#D55E00",
+    "#CC79A7",
+    "#F0E442",
+    "#56B4E9",
+    "#E69F00",
+    "#000000",
+    "#0072B2",
+    "#009E73",
+    "#D55E00",
+    "#CC79A7",
+    "#F0E442",
+    "#56B4E9",
+    "#E69F00",
+]
+
 # For files
 DATA_PATH = "data"
 SPLIT_PATH = os.path.join(DATA_PATH, "split")
 TAR_PATH = os.path.join(DATA_PATH, "documents.tgz")
 DONE_DIR = os.path.join(DATA_PATH, "done.txt")
+HUMAN_PATH = "human"
+QWEN_PATH = "qwen"
+MISTRAL_PATH = "mistral"

@@ -9,6 +9,7 @@ from lingua import LanguageDetectorBuilder
 def download_nmt(link: str = DATA_LINK):
     """
     Downloads a dataset (in this case, News Commentary v16).
+    Note: this downloads the original version, which has not been filtered/cleaned yet.
 
     Arguments:
     link (str): Link to the dataset. Should be a link that when clicked, immediately
@@ -90,8 +91,9 @@ def get_article_text(
 
     Arguments:
     directory (str): The .txt article file.
+    remove_p (bool): Whether to remove the <HEADLINE> in the text.
     remove_p (bool): Whether to remove the <P> breaks in the text.
-    remove_p (bool): Whether to remove line breaks (\n) from the text.
+    remove_n (bool): Whether to remove line breaks (\n) from the text.
 
     Returns:
     The contents of that article file, cleaned.
@@ -191,6 +193,7 @@ def clean_data(directory: str = DATA_PATH):
                             try:
                                 with open(fullpath, "w") as f:
                                     f.write(full_text)
+
                             except Exception as e:
                                 print(f"Error writing to file {fullpath}: {e}")
 
@@ -201,13 +204,14 @@ def clean_data(directory: str = DATA_PATH):
 
 
 # Extra utils for getting dataset statistics
-def count_tokens_in_document(text, lang_code):
+def count_tokens_in_document(text, lang_code, use_period: bool = True):
     """
     Counts the number of tokens in the given text, handling tokenization
     for different languages appropriately.
     Arguments:
     text (str): The text to tokenize.
     lang_code (str): The language code of the text.
+    use_period (bool): Whether to count periods as words.
     Returns:
     int: The number of tokens.
     """
@@ -224,6 +228,10 @@ def count_tokens_in_document(text, lang_code):
         tokens = findall(r"\S+|\s+|\.", text)
         # Remove empty strings from the result
         tokens = [token for token in tokens if token.strip()]
+
+    # Period removal
+    if not use_period:
+        tokens = [token for token in tokens if token not in {".", "。", "．", "｡"}]
 
     return len(tokens)
 
@@ -268,3 +276,13 @@ def count_document_lengths(directory: str = DATA_PATH):
                         pbar.update(1)
 
     return total
+
+
+# For dataset generation
+def extract_title_and_sentence(text):
+    # Extract title: First element in list
+    sents = text.split("\n")
+    sents = list(filter(None, sents))
+    title, sentence = sents[0], sents[1]
+
+    return title, sentence

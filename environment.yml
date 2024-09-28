@@ -7,12 +7,26 @@ channels:
 dependencies:
   - python==3.11.9
   - numpy==1.25.2
+  - scikit-learn
+  - matplotlib
   - pandas
   - transformers
-  - pytorch
+  - pytorch=2.1.0
   - lightning==2.2.1
   - tqdm=4.66.1
+  - huggingface_hub
+  - conda-forge::openai
+  - python-dotenv
   - pip
   - pip:
     - lingua-language-detector
     - wget
+    - sentencepiece # For LlaMA tokenizer
+    - git+https://github.com/modelscope/modelscope.git # For PolyLM
+    - accelerate # For PolyLM
+    - einops # For PolyLM
+    - protobuf # For PolyLM
+    - jieba
+    - fugashi
+    # # For mT5
+    # - sentencepiece
