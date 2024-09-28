@@ -138,7 +138,7 @@ def generate_text(args):
                 messages = [{"role": "user", "content": input_doc}]
 
                 chat = tokenizer.apply_chat_template(
-                    messages, tokenize=False, add_generation_prompt=True
+                    messages, tokenize=False, add_generation_prompt=False
                 )
                 inputs = tokenizer([chat], return_tensors="pt").to(device)
 

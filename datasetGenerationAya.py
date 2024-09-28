@@ -12,7 +12,7 @@ def config():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--model_id",
-        default="vilm/vulture-40B",
+        default="CohereForAI/aya-23-8B",
         required=True,
         type=str,
         help="The LLM to use for generation",
@@ -26,7 +26,7 @@ def config():
     )
     parser.add_argument(
         "--languages",
-        default=["en", "id", "zh"],  # ["ru", "de"]
+        default=["en", "id", "zh", "de", "ru"],
         required=True,
         type=str.lower,
         nargs="+",
@@ -71,7 +71,7 @@ def generate_text(args):
     for language in args.languages:
         # Define the source and destination directories
         source_dir = f"{args.target_folder}/human/{language}_files"
-        destination_dir = f"{args.target_folder}/vulture/{language}_files"
+        destination_dir = f"{args.target_folder}/aya/{language}_files"
         os.makedirs(destination_dir, exist_ok=True)
 
         # Loop through all .txt files in the source directory
@@ -145,7 +145,6 @@ def generate_text(args):
                         max_length=args.max_length,
                         temperature=args.temperature,
                         top_p=0.9,
-                        num_beams=4,  # More diverse generation with beam search
                         early_stopping=True,
                     )
 
@@ -160,7 +159,7 @@ def generate_text(args):
                     output_file.write(f"{title}\n\n{generated_text}")
 
     print(
-        f"Article generation complete! Files saved in 'dataset/machine/{args.languages}_files'."
+        f"Article generation complete! Files saved in 'dataset/aya/{args.languages}_files'."
     )
 
 
