@@ -24,6 +24,8 @@ conda env create -f environment_gpu.yml
 
 ## **Running**
 
+### **Dataset Generation**
+
 The datasets in this project were generated manually using the following models:
 
 1. [meta-llama/Llama-3.1-8B-Instruct](https://huggingface.co/meta-llama/Llama-3.1-8B-Instruct)
@@ -39,7 +41,14 @@ All the above models are at least somewhat capable of generating articles in the
 4. Indonesian (🇮🇩)
 5. Russian (🇷🇺)
 
-To replicate the process, run any of the following for the dataset(s) you want:
+To replicate the process, we first need to generate and clean the dataset. This can be done by simply performing the following:
+
+```
+python get_base_data.py
+```
+
+Alternatively, you can run it from the notebook [here](notebooks/example.ipynb) (alongside an overview of the dataloader).
+Afterwards, run any of the following for the dataset(s) you want:
 
 ```
 python datasetGenerationLlama.py
@@ -81,6 +90,7 @@ _Currently, the way it is setup is that you need to have a `token.json` file wit
 _... or just the standard way of having it in your environment variable._
 _Also, ensure that the folders containing the data are in the same directory as this README._
 
+### **Evaluation**
 
 To evaluate the generated datasets, run the following:
 
