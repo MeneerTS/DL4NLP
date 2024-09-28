@@ -2,7 +2,7 @@ import os, torch, argparse, json
 from tqdm import tqdm
 from huggingface_hub import login
 from transformers import AutoModelForCausalLM, AutoTokenizer
-from utils.setSeed import set_seed
+from utils.setSeed import set_seed_all
 from utils.cleanGeneratedText import clean_mistral_articles
 from utils.dataUtils import (
     count_tokens_in_document,
@@ -169,7 +169,7 @@ def generate_text(args):
 if __name__ == "__main__":
 
     args = config()
-    set_seed(args.seed)
+    set_seed_all(args.seed)
     generate_text(args)
 
     print("Cleaning files...")

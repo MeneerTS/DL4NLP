@@ -1,7 +1,7 @@
 import os, torch, argparse
 from tqdm import tqdm
 from transformers import pipeline
-from utils.setSeed import set_seed
+from utils.setSeed import set_seed_all
 from utils.dataUtils import (
     count_tokens_in_document,
     get_article_text,
@@ -298,5 +298,5 @@ def generate_text(args):
 if __name__ == "__main__":
 
     args = config()
-    set_seed(args.seed)
+    set_seed_all(args.seed)
     generate_text(args)
