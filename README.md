@@ -14,9 +14,11 @@ Afterwards, you need to install the dependencies:
 
 ```
 conda env create -f environment.yml
+```
 
-# Or this depending on if you want to and can use CUDA.
+Use the below instead if you want to install with CUDA compatibility:
 
+```
 conda env create -f environment_gpu.yml
 ```
 
@@ -37,17 +39,17 @@ All the above models are at least somewhat capable of generating articles in the
 4. Indonesian (🇮🇩)
 5. Russian (🇷🇺)
 
-To replicate the process, run the following:
+To replicate the process, run any of the following for the dataset(s) you want:
 
 ```
 python datasetGenerationLlama.py
+```
 
-# OR
-
+```
 python datasetGenerationGPT.py
+```
 
-# OR
-
+```
 python datasetGenerationMistral.py \
     --model_id "mistralai/Mistral-Small-Instruct-2409" \
     --device "cuda" \
@@ -55,9 +57,9 @@ python datasetGenerationMistral.py \
     --max_length 2000 \
     --temperature 0.6 \
     --target_folder "" # Where you want the Mistral files to be located in
+```
 
-# OR
-
+```
 python datasetGenerationQwen.py \
     --model_id "Qwen/Qwen2.5-32B-Instruct" \
     --device "cuda" \
