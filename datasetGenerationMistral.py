@@ -2,6 +2,7 @@ import os, torch, argparse, json
 from tqdm import tqdm
 from huggingface_hub import login
 from transformers import AutoModelForCausalLM, AutoTokenizer
+from utils.setSeed import set_seed
 from utils.cleanGeneratedText import clean_mistral_articles
 from utils.dataUtils import (
     count_tokens_in_document,
@@ -16,6 +17,12 @@ with open("token.json") as f:
 
 def config():
     parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--seed",
+        default=42,
+        type=int,
+        help="The seed for reproductibility",
+    )
     parser.add_argument(
         "--model_id",
         default="mistralai/Mistral-Small-Instruct-2409",
@@ -162,6 +169,7 @@ def generate_text(args):
 if __name__ == "__main__":
 
     args = config()
+    set_seed(args.seed)
     generate_text(args)
 
     print("Cleaning files...")
