@@ -49,7 +49,7 @@ def config():
     )
     parser.add_argument(
         "--max_length",
-        default=2000,
+        default=4000,
         type=int,
         help="The max length of the model output per prompt in tokens",
     )
