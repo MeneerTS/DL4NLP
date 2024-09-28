@@ -17,7 +17,7 @@ def config():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--model_id",
-        default="mistralai/Mistral-Small-Instruct-2409",
+        default="Qwen/Qwen2.5-32B-Instruct",
         required=True,
         type=str,
         help="The LLM to use for generation",
@@ -75,7 +75,7 @@ def generate_text(args):
     # Loop over languages
     for language in args.languages:
         source_dir = f"{args.target_folder}/human/{language}_files"
-        destination_dir = f"{args.target_folder}/mistral/{language}_files"
+        destination_dir = f"{args.target_folder}/qwen/{language}_files"
         os.makedirs(destination_dir, exist_ok=True)
 
         # Process all files in the source directory
@@ -135,7 +135,12 @@ def generate_text(args):
                     )
 
                 # Tokenize input and move to GPU
-                inputs = tokenizer(input_doc, return_tensors="pt").to(device)
+                messages = [{"role": "user", "content": input_doc}]
+
+                chat = tokenizer.apply_chat_template(
+                    messages, tokenize=False, add_generation_prompt=True
+                )
+                inputs = tokenizer([chat], return_tensors="pt").to(device)
 
                 # Generate output
                 with torch.no_grad():
@@ -158,9 +163,7 @@ def generate_text(args):
                 with open(output_file_path, "w", encoding="utf-8") as output_file:
                     output_file.write(f"{title}\n\n{generated_text}")
 
-    print(
-        f"Article generation complete! Files saved in '{args.target_folder}mistral/'."
-    )
+    print(f"Article generation complete! Files saved in '{args.target_folder}qwen/'.")
 
 
 if __name__ == "__main__":
