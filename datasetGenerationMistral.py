@@ -163,6 +163,6 @@ if __name__ == "__main__":
     set_seed_all(args.seed)
     generate_text(args)
 
-    # print("Cleaning files...")
-    # clean_mistral_articles(args.languages)
-    # print("Cleaning done!\n")
+    print("Cleaning files...")
+    clean_mistral_articles(args.languages)
+    print("Cleaning done!\n")

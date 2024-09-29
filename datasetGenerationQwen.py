@@ -155,6 +155,6 @@ if __name__ == "__main__":
     set_seed_all(args.seed)
     generate_text(args)
 
-    # print("Cleaning files...")
-    # clean_qwen_articles(args.languages)
-    # print("Cleaning done!\n")
+    print("Cleaning files...")
+    clean_qwen_articles(args.languages)
+    print("Cleaning done!\n")

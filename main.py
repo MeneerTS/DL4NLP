@@ -58,7 +58,6 @@ def config():
     parser.add_argument("--random_fills", action="store_true")
     parser.add_argument("--random_fills_tokens", action="store_true")
     parser.add_argument("--cache_dir", type=str, default="cache2")
-    print(args.cache_dir)
 
     return parser.parse_args()
 
