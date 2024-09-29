@@ -167,7 +167,9 @@ data/documents.tgz
 *.zip
 /human
 /mistral
+/mistral_clean
 /qwen
+/qwen_clean
 
 # Config files
 /.vscode
