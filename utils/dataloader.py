@@ -115,9 +115,10 @@ def get_sample_sentence(text: str, n_sentences: int = 1):
     # First split the sentences
     sentences = text.split("\n")
 
-    # If the sentences do not exist (i.e., the file was generated badly), return any existing text
-    if len(sentences) < 3 and sentences != []:
-        return "\n".join(sentences[2])
+    # If the sentences do not exist (i.e., the file was generated badly), return "None"
+    if len(sentences) < 4 and sentences != []:
+
+        return "None"
 
     end_idx = n_sentences + 3 if len(sentences) - 3 >= n_sentences else len(sentences)
     sample = sentences[3:end_idx]
