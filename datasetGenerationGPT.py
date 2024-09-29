@@ -132,10 +132,10 @@ def generate_text(args):
                 messages = [
                     {
                         "role": "user",
-                        "content": f"Write a news article with the following headline: '{title}'."
-                        f"Start your article with the following sentence: '{sentence}'"
-                        "Do not print the title and do not include separate headlines in the article."
-                        f"The article must contain a maximum of 100 words more or less than {article_length}.",
+                        "content": f"Write a news article with the following headline in English: '{title}'. "
+                                f"Start your article with the following sentence: '{sentence}'. "
+                                "Do not print the title and do not include separate headlines in the article."
+                                f"The article should be approximately {article_length} words, with the maximum difference of 100 words."
                     },
                 ]
 
@@ -165,11 +165,11 @@ def generate_text(args):
                 messages = [
                     {
                         "role": "user",
-                        "content": f"Schreiben sie einen nachrichtenartikel mit der folgenden überschrift: '{title}'."
-                        f"Beginnen sie ihren artikel mit folgendem satz: '{sentence}'."
-                        "Drucken Sie den Titel nicht und fügen Sie keine separaten Überschriften in den Artikel ein."
-                        f"Der artikel darf höchstens 100 wörter mehr oder weniger als {article_length} enthalten.",
-                    },
+                        "content": f"Schreiben Sie einen Nachrichtenartikel mit der folgenden Überschrift: '{title}'. "
+                                        f"Beginnen Sie Ihren Artikel mit folgendem Satz: '{sentence}'. "
+                                        "Drucken Sie den Titel nicht und fügen Sie keine separaten Überschriften in den Artikel ein."
+                                        f"Der Artikel sollte ungefähr {article_length} Wörter lang sein, mit einer maximalen Abweichung von 100 Wörtern."
+                                        }        
                 ]
 
             elif args.language == "es":
@@ -209,10 +209,10 @@ def generate_text(args):
                 messages = [
                     {
                         "role": "user",
-                        "content": f"Tulis satu artikel berita dengan judul sebagai berikut: '{title}'."
-                        f"Mulai artikel anda dengan kalimat berikut ini: '{sentence}'."
-                        "Jangan mencetak judul dan jangan menyertakan judul terpisah di dalam artikel."
-                        f"Artikelnya harus mengandung maksimal 100 kata lebih atau kurang dari {article_length}.",
+                        "content": f"Tulislah artikel berita dengan judul berikut: '{title}'. "
+                                    f"Mulailah artikel Anda dengan kalimat berikut: '{sentence}'. "
+                                    "Jangan mencetak judul dan jangan menyertakan judul terpisah di dalam artikel."
+                                    f"Artikel tersebut harus memiliki panjang sekitar {article_length} kata, dengan perbedaan maksimal 100 kata."
                     },
                 ]
 
@@ -275,21 +275,21 @@ def generate_text(args):
                 messages = [
                     {
                         "role": "user",
-                        "content": f"Напишите новостную статью с заголовком: '{title}'."
-                        f"Начните ваше эссе со следующего предложения: '{sentence}'."
-                        "Не печатайте заголовок и не включайте отдельные подзаголовки в статью."
-                        f"Статья должна содержать максимум 100 слов больше или меньше, чем {article_length}.",
-                    },
+                        "content": f"Напишите новостную статью со следующим заголовком: '{title}'. "
+                                    f"Начните свою статью со следующего предложения: '{sentence}'. "
+                                    "Не печатайте заголовок и не включайте отдельные подзаголовки в статью."
+                                    f"Статья должна быть приблизительно {article_length} слов, с максимальной разницей в 100 слов."
+                        },
                 ]
 
             elif args.language == "zh":
                 messages = [
                     {
                         "role": "user",
-                        "content": f"写一篇新闻报道，标题如下：'{title}'。"
-                        f"用以下句子作为文章的开头 '{sentence}'。"
-                        "不要打印标题，也不要在文章中包含单独的标题。"
-                        f"文章字数不得超过或少于{article_length}，最多 100 字。",
+                        "content": f"用以下标题写一篇新闻文章: '{title}'。"
+                                    f"用以下句子开始你的文章: '{sentence}'。"
+                                    "不要打印标题，也不要在文章中包含单独的标题。"
+                                    f"文章的长度应大约为 {article_length} 字符，最大差异为 50 字符。"
                     },
                 ]
 
