@@ -98,7 +98,7 @@ def generate_text(args):
                 )
 
                 # Extract title and first sentence
-                title, sentence = extract_title_and_sentence(text)
+                title, sentence = extract_title_and_sentence(text, language=language)
                 print(f"Title: {title}")
                 print(f"Sentence: {sentence}")
 
