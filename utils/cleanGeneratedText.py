@@ -93,7 +93,8 @@ def clean_qwen_articles(languages: list = ["en", "zh", "de", "id", "ru"]):
 
 def clean_gpt_articles(languages: list, model_id: str):
     
-    for language in languages
+    for language in languages:
+        
         lang_dir = os.path.join(model_id, f"{language}_files")
 
         # Process each article in the language folder

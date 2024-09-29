@@ -1,7 +1,8 @@
-import os, torch, argparse
+import os, torch, argparse, re
 from tqdm import tqdm
-from transformers import pipeline
+from transformers import pipeline, LlamaForCausalLM, AutoTokenizer
 from utils.setSeed import set_seed_all
+from utils.promptUtils import create_prompt
 from dotenv import load_dotenv
 from utils.cleanGeneratedText import clean_llama_articles
 from utils.dataUtils import (
@@ -41,7 +42,7 @@ def config():
         "--languages",
         default=["en", "id", "zh", "de", "ru"],
         type=str.lower,
-        margs="+",
+        nargs="+",
         help="The desired languages to generate for",
     )
     parser.add_argument(
@@ -62,11 +63,17 @@ def config():
         type=float,
         help="The model temperature for generation",
     )
+    parser.add_argument(
+        "--target_folder",
+        required=True,
+        type=str,
+        help="The folder to save the files in",
+    )
     args = parser.parse_args()
 
     return args
 
-def extract_title_and_sentence(text):
+def extract_title_and_sentence(text, language):
     # Split the text by lines
     lines = text.strip().split('\n')
     
@@ -99,6 +106,14 @@ def generate_text(args):
         device=args.device,
         token=token,
     )
+    # tokenizer = AutoTokenizer.from_pretrained(
+    # "meta-llama/Meta-Llama-3.1-8B", token=token
+    # )
+    # tokenizer.pad_token = tokenizer.eos_token
+    # model = LlamaForCausalLM.from_pretrained("meta-llama/Meta-Llama-3.1-8B", token=token)
+
+    # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # model = model.to(device)
 
     for language in args.languages: 
     # Define the source and destination directories
@@ -123,175 +138,54 @@ def generate_text(args):
                     article_length= len(text.split())
 
                 # Extract the title and the first sentence
-                title, sentence = extract_title_and_sentence(text)
+                title, sentence = extract_title_and_sentence(text, language)
 
                 # Define the prompt for text generation
+                user_prompt = create_prompt(
+                    title=title,
+                    sentence=sentence,
+                    article_length=article_length,
+                    language=language,
+                )
 
-                if language == "en":
-                    messages = [
-                        {
-                            "role": "user",
-                            "content": f"Write a news article with the following headline: '{title}'."
-                            f"Start your article with the following sentence: '{sentence}'"
-                            "Do not print the title and do not include separate headlines in the article."
-                            f"The article must contain a maximum of 100 words more or less than {article_length}.",
-                        },
-                    ]
+                # Create messages for the system role
+                system_message = {
+                    "role": "system",
+                    "content": "You are a helpful assistant.",
+                }
 
-                elif language == "ar":
-                    messages = [
-                        {
-                            "role": "user",
-                            "content": f".'{title}': اكتب مقالاً إخبارياً بالعنوان التالي"
-                            f".'{sentence}' :ابدأ مقالك بالجملة التالية"
-                            ".لا تدرج عناوين منفصلة في المقال"
-                            f".{article_length} يجب أن تحتوي المقالة على 100 كلمة كحد أقصى أكثر أو أقل من",
-                        },
-                    ]
+                user_message = {"role": "user", "content": user_prompt}
+                messages = [system_message, user_message]
 
-                elif language == "cs":
-                    messages = [
-                        {
-                            "role": "user",
-                            "content": f"Napište článek s následujícím titulkem: '{title}'."
-                            f"Začněte článek následující větou: '{sentence}'."
-                            "Do článku nezařazujte samostatné titulky."
-                            f"Článek musí obsahovat maximálně o 100 slov více nebo méně než {article_length}.",
-                        },
-                    ]
+                # chat_input = tokenizer.apply_chat_template(
+                #     messages, tokenize=False, add_generation_prompt=True
+                # )
 
-                elif language == "de":
-                    messages = [
-                        {
-                            "role": "user",
-                            "content": f"Schreiben sie einen nachrichtenartikel mit der folgenden überschrift: '{title}'."
-                            f"Beginnen sie ihren artikel mit folgendem satz: '{sentence}'."
-                            "Drucken Sie den Titel nicht und fügen Sie keine separaten Überschriften in den Artikel ein."
-                            f"Der artikel darf höchstens 100 wörter mehr oder weniger als {article_length} enthalten.",
-                        },
-                    ]
+                # model_inputs = tokenizer([chat_input], return_tensors="pt").to(device)
 
-                elif language == "es":
-                    messages = [
-                        {
-                            "role": "user",
-                            "content": f"Escribe una noticia con el siguiente titular: '{title}'."
-                            f"Comience el artículo con la siguiente frase: '{sentence}'."
-                            "No incluya titulares separados en el artículo."
-                            f"El artículo debe contener un máximo de 100 palabras más o menos que {article_length}.",
-                        },
-                    ]
+                # Generate output using the model
+                # with torch.no_grad():
+                #     generated_ids = model.generate(
+                #         **model_inputs,
+                #         max_new_tokens=args.max_length,
+                #         do_sample=True,
+                #         temperature=args.temperature,
+                #         top_p=0.9,
+                #     )
 
-                elif language == "fr":
-                    messages = [
-                        {
-                            "role": "user",
-                            "content": f"Rédigez un article avec le titre suivant: '{title}'."
-                            f"Commencez votre article par la phrase suivante: '{sentence}'."
-                            "N'incluez pas de titres distincts dans l'article."
-                            f"L'article doit contenir au maximum 100 mots de plus ou de moins que {article_length}.",
-                        },
-                    ]
+                # Extract only the newly generated tokens (ignore input tokens)
+                # generated_ids = [
+                #     output_ids[len(input_ids) :]
+                #     for input_ids, output_ids in zip(
+                #         model_inputs.input_ids, generated_ids
+                #     )
+                # ]
 
-                elif language == "hi":
-                    messages = [
-                        {
-                            "role": "user",
-                            "content": f"निम्नलिखित शीर्षक के साथ एक समाचार लेख लिखें: '{title}'."
-                            f"अपने लेख की शुरुआत निम्नलिखित वाक्य से करें: '{sentence}'."
-                            "लेख में अलग-अलग सुर्खियाँ शामिल न करें।."
-                            f"लेख में अधिकतम 100 शब्द {article_length} से अधिक या कम होने चाहिए।.",
-                        },
-                    ]
-
-                elif language == "id":
-                    messages = [
-                        {
-                            "role": "user",
-                            "content": f"Tulis satu artikel berita dengan judul sebagai berikut: '{title}'."
-                            f"Mulai artikel anda dengan kalimat berikut ini: '{sentence}'."
-                            "Jangan mencetak judul dan jangan menyertakan judul terpisah di dalam artikel."
-                            f"Artikelnya harus mengandung maksimal 100 kata lebih atau kurang dari {article_length}.",
-                        },
-                    ]
-
-                elif language == "it":
-                    messages = [
-                        {
-                            "role": "user",
-                            "content": f"Scrivi un articolo di notizie con il seguente titolo: '{title}'."
-                            f"Inizia il tuo articolo con la seguente frase: '{sentence}'."
-                            "Non includere titoli separati nell'articolo."
-                            f"L'articolo deve contenere un massimo di 100 parole in più o in meno rispetto a {article_length}.",
-                        },
-                    ]
-
-                elif language == "ja":
-                    messages = [
-                        {
-                            "role": "user",
-                            "content": f"次のタイトルでニュース記事を書いてください： '{title}'。"
-                            f"次の文章で記事を書き始めなさい： '{sentence}'。"
-                            "記事に別の見出しをつけないでください。"
-                            f"記事の文字数は最大100字以上{article_length}未満とします。",
-                        },
-                    ]
-
-                elif language == "kk":
-                    messages = [
-                        {
-                            "role": "user",
-                            "content": f"Келесі тақырыппен жаңалық мақаласын жазыңыз: '{title}'."
-                            f"Эссені келесі сөйлеммен бастаңыз: '{sentence}'."
-                            "Мақалаға бөлек тақырыптарды қоспаңыз."
-                            f"Мақалада {article_length} мәнінен кем немесе көп 100 сөз болуы керек.",
-                        },
-                    ]
-
-                elif language == "nl":
-                    messages = [
-                        {
-                            "role": "user",
-                            "content": f"Schijf een nieuwsartikel met de volgende titel: '{title}'."
-                            f"Begin je artikel met de volgende zin: '{sentence}'"
-                            "Voeg geen aparte koppen toe aan het artikel."
-                            f"Het artikel moet maximal 100 meer of minder dan {article_length} woorden bevatten.",
-                        },
-                    ]
-
-                elif language == "pt":
-                    messages = [
-                        {
-                            "role": "user",
-                            "content": f"Escreva um artigo de notícias com o seguinte título: '{title}'."
-                            f"Comece o seu artigo com a seguinte frase: '{sentence}'."
-                            "Não inclua títulos separados no artigo."
-                            f"O artigo deve conter um máximo de 100 palavras a mais ou a menos do que {article_length}.",
-                        },
-                    ]
-
-                elif language == "ru":
-                    messages = [
-                        {
-                            "role": "user",
-                            "content": f"Напишите новостную статью с заголовком: '{title}'."
-                            f"Начните ваше эссе со следующего предложения: '{sentence}'."
-                            "Не печатайте заголовок и не включайте отдельные подзаголовки в статью."
-                            f"Статья должна содержать максимум 100 слов больше или меньше, чем {article_length}.",
-                        },
-                    ]
-
-                elif language == "zh":
-                    messages = [
-                        {
-                            "role": "user",
-                            "content": f"写一篇新闻报道，标题如下：'{title}'。"
-                            f"用以下句子作为文章的开头 '{sentence}'。"
-                            "不要打印标题，也不要在文章中包含单独的标题。"
-                            f"文章字数不得超过或少于{article_length}，最多 100 字。",
-                        },
-                    ]
-
+                 # Decode the generated text
+                # generated_text = tokenizer.batch_decode(
+                #     generated_ids, skip_special_tokens=True
+                # )[0]
+                
                 # Define terminators (EOS tokens)
                 terminators = [
                     pipe.tokenizer.eos_token_id,
@@ -301,7 +195,7 @@ def generate_text(args):
                 # Generate the article using the model
                 outputs = pipe(
                     messages,
-                    max_new_tokens=args.max_tokens,
+                    max_new_tokens=args.max_length,
                     eos_token_id=terminators,
                     do_sample=True,
                     temperature=args.temperature,
@@ -315,10 +209,11 @@ def generate_text(args):
                 output_file_path = os.path.join(destination_dir, file_name)
 
                 with open(output_file_path, "w", encoding="utf-8") as output_file:
-                    output_file.write(f"{title}\n\n{assistant_response}")
+                    # output_file.write(f"{title}\n\n{assistant_response}")
+                    output_file.write(f"{title}\n\n{generated_text}")
 
         print(
-            f"Article generation complete! Files saved in 'dataset/machine/{language}_files'."
+            f"Article generation complete! Files saved in '{args.target_folder}/machine/Llama-3.1-8B/{language}_files'."
         )
 
 
