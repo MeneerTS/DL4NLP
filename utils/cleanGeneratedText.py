@@ -1,4 +1,4 @@
-import os
+import os, re
 from utils.constants import *
 from utils.dataUtils import get_article_text
 
@@ -89,3 +89,65 @@ def clean_qwen_articles(languages: list = ["en", "zh", "de", "id", "ru"]):
 
                 with open(fc_path, "w+", encoding="utf-8") as f:
                     f.write(new_text)
+
+def clean_gpt_articles(language: str, model_id: str):
+    
+
+    lang_dir = os.path.join(model_id, f"{language}_files")
+
+    # Process each article in the language folder
+    for file_name in os.listdir(lang_dir):
+        file_path = os.path.join(lang_dir, file_name)
+        if file_name.endswith(".txt"):
+            with open(file_path, 'r', encoding='utf-8') as file:
+                text = file.read()
+
+            # Split text by the first newline to separate title from the rest of the article
+            parts = text.split('\n', 1)
+            
+            if len(parts) > 1:
+                title = parts[0].strip()
+                rest_of_article = parts[1]
+
+                # Replace multiple newlines with a single newline in the body of the article
+                rest_of_article = re.sub(r'\n+', '\n', rest_of_article)
+                
+                # Combine title and the modified article
+                processed_text = f"{title}\n{rest_of_article}"  # Keep the first newline after the title
+            else:
+                processed_text = text  # In case the article doesn't have a newline after the title
+
+            # Write the processed text back to the file
+            with open(file_path, 'w', encoding='utf-8') as file:
+                file.write(processed_text)
+
+def clean_llama_articles(language: str, model_id: str):
+    
+
+    lang_dir = os.path.join(model_id, f"{language}_files")
+
+    # Process each article in the language folder
+    for file_name in os.listdir(lang_dir):
+        file_path = os.path.join(lang_dir, file_name)
+        if file_name.endswith(".txt"):
+            with open(file_path, 'r', encoding='utf-8') as file:
+                text = file.read()
+
+            # Split text by the first newline to separate title from the rest of the article
+            parts = text.split('\n', 1)
+            
+            if len(parts) > 1:
+                title = parts[0].strip()
+                rest_of_article = parts[1]
+
+                # Replace multiple newlines with a single newline in the body of the article
+                rest_of_article = re.sub(r'\n+', '\n', rest_of_article)
+                
+                # Combine title and the modified article
+                processed_text = f"{title}\n{rest_of_article}"  # Keep the first newline after the title
+            else:
+                processed_text = text  # In case the article doesn't have a newline after the title
+
+            # Write the processed text back to the file
+            with open(file_path, 'w', encoding='utf-8') as file:
+                file.write(processed_text)

@@ -72,28 +72,6 @@ for language in languages:
     # Create the destination directory if it doesn't exist
     os.makedirs(destination_dir, exist_ok=True)
 
-    def extract_title_and_sentence(text):
-        # Split the text by lines
-        lines = text.strip().split('\n')
-        
-        # The title is the first non-empty line
-        title = lines[0].strip() if lines else "No Title Found"
-        
-        # Find the first sentence in the remaining text
-        remaining_text = ' '.join(lines[1:]).strip()  # Join everything after the title
-
-        if language == 'zh':
-            sentence_match = re.search(r'([^。！？]*[。！？])', remaining_text) # Typical Chinese punctuation
-        
-        else:
-            sentence_match = re.search(r'([^.]*?\.)', remaining_text)
-        
-        
-        # Get the first sentence or a default message if not found
-        sentence = sentence_match.group(1).strip() if sentence_match else "No sentence found"
-        
-        return title, sentence
-
     # Loop through all .txt files in the source directory
     for file_name in tqdm(os.listdir(source_dir), desc=f"Processing files for {lang_name}", unit="file"):
         if file_name.endswith(".txt"):

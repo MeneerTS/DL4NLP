@@ -1,9 +1,10 @@
-import os, torch, argparse
+import os, torch, argparse, re
 from tqdm import tqdm
 from transformers import pipeline
 from utils.setSeed import set_seed_all
 from dotenv import load_dotenv
-from utils.cleanGeneratedText import clean_llama_articles
+from openai import OpenAI
+from utils.cleanGeneratedText import clean_gpt_articles
 from utils.dataUtils import (
     count_tokens_in_document,
     get_article_text,
@@ -22,7 +23,7 @@ def config():
     )
     parser.add_argument(
         "--model_id",
-        default="meta-llama/Meta-Llama-3.1-8B-Instruct",
+        default="gpt-4o-mini",
         type=str,
         help="The LLM to use for generation",
     )
@@ -47,7 +48,7 @@ def config():
         "--source_dir",
         default="",
         type=str,
-        help="The HuggingFace token",
+        help="The source directory",
     )
     parser.add_argument(
         "--max_length",
@@ -61,27 +62,49 @@ def config():
         type=float,
         help="The model temperature for generation",
     )
+    parser.add_argument(
+        "--target_folder",
+        required=True,
+        type=str,
+        help="The folder to save the files in",
+    )
     args = parser.parse_args()
 
     return args
 
 
+def extract_title_and_sentence(text):
+    # Split the text by lines
+    lines = text.strip().split('\n')
+    
+    # The title is the first non-empty line
+    title = lines[0].strip() if lines else "No Title Found"
+    
+    # Find the first sentence in the remaining text
+    remaining_text = ' '.join(lines[1:]).strip()  # Join everything after the title
+
+    if args.language == 'zh':
+        sentence_match = re.search(r'([^。！？]*[。！？])', remaining_text) # Typical Chinese punctuation
+    
+    else:
+        sentence_match = re.search(r'([^.]*?\.)', remaining_text)
+    
+    # Get the first sentence or a default message if not found
+    sentence = sentence_match.group(1).strip() if sentence_match else "No sentence found"
+    
+    return title, sentence
+
 def generate_text(args):
 
-    load_dotenv()
-    token = os.getenv("HF_TOKEN")
     # Set up the pipeline with the Hugging Face token (if needed)
-    pipe = pipeline(
-        "text-generation",
-        model=args.model_id,
-        model_kwargs={"torch_dtype": torch.bfloat16},
-        device=args.device,
-        token=token,
-    )
+    load_dotenv()
+    api_key = os.getenv('OPENAI_API_KEY')
+
+    client = OpenAI(api_key=api_key)
 
     # Define the source and destination directories
     source_dir = f"{args.target_folder}/human/{args.language}_files"
-    destination_dir = f"{args.target_folder}/machine/llama-3.1-8B/{args.language}_files"
+    destination_dir = f"{args.target_folder}/machine/{args.model_id}/{args.language}_files"
     os.makedirs(destination_dir, exist_ok=True)
 
     # Loop through all .txt files in the source directory
@@ -270,24 +293,14 @@ def generate_text(args):
                     },
                 ]
 
-            # Define terminators (EOS tokens)
-            terminators = [
-                pipe.tokenizer.eos_token_id,
-                pipe.tokenizer.convert_tokens_to_ids("<|eot_id|>"),
-            ]
-
             # Generate the article using the model
-            outputs = pipe(
-                messages,
-                max_new_tokens=args.max_tokens,
-                eos_token_id=terminators,
-                do_sample=True,
-                temperature=args.temperature,
-                top_p=0.9,
+            completion = client.chat.completions.create(
+                model=args.model_id,
+                messages=messages
             )
 
             # Extract the generated text
-            assistant_response = outputs[0]["generated_text"][-1]["content"]
+            assistant_response = completion.choices[0].message.content
 
             # Save the generated article in the destination folder
             output_file_path = os.path.join(destination_dir, file_name)
@@ -296,7 +309,7 @@ def generate_text(args):
                 output_file.write(f"{title}\n\n{assistant_response}")
 
     print(
-        f"Article generation complete! Files saved in 'dataset/machine/{args.language}_files'."
+        f"Article generation complete! Files saved in 'dataset/machine/{args.model_id}/{args.language}_files'."
     )
 
 
