@@ -1,4 +1,4 @@
-import os
+import os, re
 from torch.utils.data import Dataset
 from utils.constants import *
 from utils.dataUtils import get_article_text
@@ -72,10 +72,12 @@ class DetectionDataset(Dataset):
         if self.sentence_mode:
 
             real_texts = [
-                get_sample_sentence(text, self.n_sentences) for text in real_texts
+                get_sample_sentence(text, self.n_sentences, self.language)
+                for text in real_texts
             ]
             ai_texts = [
-                get_sample_sentence(text, self.n_sentences) for text in ai_texts
+                get_sample_sentence(text, self.n_sentences, self.language)
+                for text in ai_texts
             ]
 
         detect_gpt_data = {"original": real_texts, "sampled": ai_texts}
@@ -101,29 +103,36 @@ class DetectionDataset(Dataset):
 
 
 # For getting only a sentence
-def get_sample_sentence(text: str, n_sentences: int = 1):
+def get_sample_sentence(text: str, n_sentences: int = 1, language: str = "en"):
     """
-    Function to sample a sentence from a text.
-
+    Function to sample sentences from a text.
     Arguments:
     text (str): The text to sample from.
-    n_sentences (int): The number of sentences to sample (will be clipped if none exist).
+    n_sentences (int): The number of sentences to sample (will be clipped if fewer exist).
+    language (str): The language of the text (default is "en" for English).
 
     Returns:
-    The list of filenames that exist in all the listed language folders.
+    A list of sampled sentences.
     """
     # First split the sentences
-    sentences = text.split("\n")
+    lines = text.strip().split("\n")
 
-    # If the sentences do not exist (i.e., the file was generated badly), return "None"
-    if len(sentences) < 4 and sentences != []:
+    # Find the sentences in the remaining text
+    remaining_text = " ".join(lines[1:]).strip()
 
-        return "None"
+    if language.lower() == "zh":
+        sentence_pattern = r"([^。！？]*[。！？])"
 
-    end_idx = n_sentences + 3 if len(sentences) - 3 >= n_sentences else len(sentences)
-    sample = sentences[3:end_idx]
+    else:
+        sentence_pattern = r"([^.!?]*[.!?])"
 
-    return "\n".join(sample)
+    sentences = re.findall(sentence_pattern, remaining_text)
+
+    # Clip n_sentences if it's larger than the number of available sentences
+    n_sentences = min(n_sentences, len(sentences))
+
+    # Return the specified number of sentences
+    return sentences[:n_sentences]
 
 
 def select_universal_files(langs: list = ["en"], directory: str = DATA_PATH):
