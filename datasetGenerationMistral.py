@@ -1,8 +1,9 @@
 import os, torch, argparse, json
 from tqdm import tqdm
 from huggingface_hub import login
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import MistralForCausalLM, LlamaTokenizerFast
 from utils.setSeed import set_seed_all
+from utils.promptUtils import create_prompt
 from utils.cleanGeneratedText import clean_mistral_articles
 from utils.dataUtils import (
     count_tokens_in_document,
@@ -69,13 +70,14 @@ def config():
 def generate_text(args):
     # Load the model and tokenizer
     device = torch.device(args.device if torch.cuda.is_available() else "cpu")
-    model = AutoModelForCausalLM.from_pretrained(
+    model = MistralForCausalLM.from_pretrained(
         args.model_id,
         device_map="auto",
         trust_remote_code=True,
         torch_dtype=torch.bfloat16 if torch.cuda.is_available() else torch.float32,
     )
-    tokenizer = AutoTokenizer.from_pretrained(args.model_id, use_fast=False)
+    tokenizer = LlamaTokenizerFast.from_pretrained(args.model_id)
+    tokenizer.pad_token = tokenizer.eos_token
 
     # Loop over languages
     for language in args.languages:
@@ -101,70 +103,46 @@ def generate_text(args):
                 print(f"Title: {title}")
                 print(f"Sentence: {sentence}")
 
-                # Define the prompt
-                input_doc = ""
-                if language == "en":
-                    input_doc = (
-                        f"Write a news article with the following headline in English: '{title}'. "
-                        f"Start your article with the following sentence: '{sentence}'. "
-                        "Do not print the title and do not include separate headlines in the article."
-                        f"The article should be approximately {article_length} words, with the maximum difference of 100 words."
-                    )
-                elif language == "de":
-                    input_doc = (
-                        f"Schreiben Sie einen Nachrichtenartikel mit der folgenden Überschrift: '{title}'. "
-                        f"Beginnen Sie Ihren Artikel mit folgendem Satz: '{sentence}'. "
-                        "Drucken Sie den Titel nicht und fügen Sie keine separaten Überschriften in den Artikel ein."
-                        f"Der Artikel sollte ungefähr {article_length} Wörter lang sein, mit einer maximalen Abweichung von 100 Wörtern."
-                    )
-                elif language == "id":
-                    input_doc = (
-                        f"Tulislah artikel berita dengan judul berikut: '{title}'. "
-                        f"Mulailah artikel Anda dengan kalimat berikut: '{sentence}'. "
-                        "Jangan mencetak judul dan jangan menyertakan judul terpisah di dalam artikel."
-                        f"Artikel tersebut harus memiliki panjang sekitar {article_length} kata, dengan perbedaan maksimal 100 kata."
-                    )
-                elif language == "ru":
-                    input_doc = (
-                        f"Напишите новостную статью со следующим заголовком: '{title}'. "
-                        f"Начните свою статью со следующего предложения: '{sentence}'. "
-                        "Не печатайте заголовок и не включайте отдельные подзаголовки в статью."
-                        f"Статья должна быть приблизительно {article_length} слов, с максимальной разницей в 100 слов."
-                    )
-                elif language == "zh":
-                    input_doc = (
-                        f"用以下标题写一篇新闻文章: '{title}'。"
-                        f"用以下句子开始你的文章: '{sentence}'。"
-                        "不要打印标题，也不要在文章中包含单独的标题。"
-                        f"文章的长度应大约为 {article_length} 字符，最大差异为 50 字符。"
-                    )
+                # Define the prompt based on language
+                user_prompt = create_prompt(
+                    title=title,
+                    sentence=sentence,
+                    article_length=article_length,
+                    language=language,
+                )
 
-                # Tokenize input and move to GPU
-                inputs = tokenizer(input_doc, return_tensors="pt").to(device)
+                # Prepare the input using the new method (with message format)
+                messages = [{"role": "user", "content": user_prompt}]
+                model_input = tokenizer.apply_chat_template(
+                    messages,
+                    tokenize=True,
+                    add_generation_prompt=True,
+                    return_tensors="pt",
+                ).to(device)
 
-                # Generate output
+                # Generate output using the model
                 with torch.no_grad():
                     generate_ids = model.generate(
-                        inputs.input_ids,
-                        attention_mask=inputs.attention_mask,
+                        model_input.input_ids,
+                        attention_mask=model_input.attention_mask,
                         do_sample=True,
-                        max_length=args.max_length,
+                        max_new_tokens=args.max_length,
                         temperature=args.temperature,
                         top_p=0.9,
                     )
 
                 # Decode the generated article
-                generated_text = tokenizer.decode(
-                    generate_ids[0], skip_special_tokens=True
-                )
+                generated_text = tokenizer.batch_decode(
+                    generate_ids, skip_special_tokens=True
+                )[0]
 
-                # Save output
+                # Save the generated text to the output file
                 output_file_path = os.path.join(destination_dir, file_name)
                 with open(output_file_path, "w", encoding="utf-8") as output_file:
                     output_file.write(f"{title}\n\n{generated_text}")
 
     print(
-        f"Article generation complete! Files saved in '{args.target_folder}mistral/'."
+        f"Article generation complete! Files saved in '{args.target_folder}/mistral/'."
     )
 
 
@@ -174,6 +152,6 @@ if __name__ == "__main__":
     set_seed_all(args.seed)
     generate_text(args)
 
-    print("Cleaning files...")
-    clean_mistral_articles(args.languages)
-    print("Cleaning done!\n")
+    # print("Cleaning files...")
+    # clean_mistral_articles(args.languages)
+    # print("Cleaning done!\n")

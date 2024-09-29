@@ -8,7 +8,7 @@ class DetectionDataset(Dataset):
 
     def __init__(
         self,
-        language: str = "en",
+        language: str.lower = "en",
         human_source: str = HUMAN_PATH,
         ai_source: str = MISTRAL_PATH,
         sentence_mode: bool = False,
