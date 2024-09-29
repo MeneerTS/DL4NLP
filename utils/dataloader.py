@@ -22,6 +22,8 @@ class DetectionDataset(Dataset):
         ai_source (str): The folder name of the AI data to use.
         sentence_mode (bool): If true, only take a sample sentence from the text.
         n_sentences (int): The number of sentences to sample (will be clipped if none exist).
+        Note: the above parameter is especially important when handling files for DetectGPT,
+        as it samples the text for 30 tokens (we do not want it to sample the original sentence).
         """
         # Get the filenames from a reference folder
         datalist = os.listdir(os.path.join(human_source, "en_files"))
@@ -51,6 +53,10 @@ class DetectionDataset(Dataset):
     def get_language(self):
 
         return self.language
+
+    def get_filepaths(self):
+
+        return self.data
 
     def get_detect_gpt_data(self):
 
@@ -106,14 +112,16 @@ def get_sample_sentence(text: str, n_sentences: int = 1):
     Returns:
     The list of filenames that exist in all the listed language folders.
     """
-
+    # First split the sentences
     sentences = text.split("\n")
 
     # If the sentences do not exist (i.e., the file was generated badly), return any existing text
     if len(sentences) < 3 and sentences != []:
         return "\n".join(sentences[2])
 
-    end_idx = n_sentences + 3 if len(sentences) - 3 >= n_sentences else 3
+    end_idx = (
+        n_sentences + 3 if len(sentences) - 3 >= n_sentences else len(sentences) - 3
+    )
     sample = sentences[3:end_idx]
 
     return "\n".join(sample)
