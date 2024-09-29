@@ -119,9 +119,7 @@ def get_sample_sentence(text: str, n_sentences: int = 1):
     if len(sentences) < 3 and sentences != []:
         return "\n".join(sentences[2])
 
-    end_idx = (
-        n_sentences + 3 if len(sentences) - 3 >= n_sentences else len(sentences) - 3
-    )
+    end_idx = n_sentences + 3 if len(sentences) - 3 >= n_sentences else len(sentences)
     sample = sentences[3:end_idx]
 
     return "\n".join(sample)
