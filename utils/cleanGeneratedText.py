@@ -6,17 +6,21 @@ from utils.dataUtils import get_article_text
 # Base filter function
 def filter_merge_sentences(sentences: list, remove_start: int = 2):
 
-    if sentences == []:
+    if sentences[remove_start:] == []:
         return "None"
 
     new_sents = list(filter(None, sentences))[remove_start:]
     new_sents = [
         sent
         for sent in new_sents
-        if ("word count" not in sent.lower() and "---" not in sent.lower())
+        if (
+            "word count" not in sent.lower()
+            and "---" not in sent.lower()
+            and len(sent) > 10
+        )
     ]
 
-    joined = "\n".join(sentences)
+    joined = "\n".join(new_sents)
 
     return joined
 
