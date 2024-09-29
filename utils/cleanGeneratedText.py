@@ -43,12 +43,14 @@ def clean_mistral_articles(languages: list = ["en", "zh", "de", "id", "ru"]):
     for language in languages:
 
         source_dir = os.path.join(MISTRAL_PATH, f"{language}_files")
+        clean_dir = os.path.join(f"{MISTRAL_PATH}_clean", f"{language}_files")
 
         for file in os.listdir(source_dir):
 
             if file.endswith(".txt"):
 
                 fullpath = os.path.join(source_dir, file)
+                fc_path = os.path.join(clean_dir, file)
                 text = get_article_text(fullpath, remove_n=False)
 
                 sentences = text.split("\n")
@@ -59,7 +61,9 @@ def clean_mistral_articles(languages: list = ["en", "zh", "de", "id", "ru"]):
 
                 new_text = f"""{title}\n\n{joined}"""
 
-                with open(fullpath, "w+", encoding="utf-8") as f:
+                # Ensure target path is available
+                os.makedirs(fc_path, exist_ok=True)
+                with open(fc_path, "w+", encoding="utf-8") as f:
 
                     f.write(new_text)
 
@@ -70,22 +74,26 @@ def clean_qwen_articles(languages: list = ["en", "zh", "de", "id", "ru"]):
     for language in languages:
 
         source_dir = os.path.join(QWEN_PATH, f"{language}_files")
+        clean_dir = os.path.join(f"{MISTRAL_PATH}_clean", f"{language}_files")
 
         for file in os.listdir(source_dir):
 
             if file.endswith(".txt"):
 
                 fullpath = os.path.join(source_dir, file)
+                fc_path = os.path.join(clean_dir, file)
                 text = get_article_text(fullpath, remove_n=False)
 
                 sentences = text.split("\n")
                 title = sentences[0]
 
-                # The first two sentences are just the title and chat history
+                # The first six sentences are just the title and chat history
                 joined = filter_merge_sentences(sentences, 6)
 
                 new_text = f"""{title}\n\n{joined}"""
 
-                with open(fullpath, "w+", encoding="utf-8") as f:
+                # Ensure target path is available
+                os.makedirs(fc_path, exist_ok=True)
+                with open(fc_path, "w+", encoding="utf-8") as f:
 
                     f.write(new_text)
