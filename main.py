@@ -14,7 +14,6 @@ pattern = re.compile(r"<extra_id_\d+>")
 def config():
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dataset", type=str, default="xsum")
     parser.add_argument("--dataset_key", type=str, default="document")
     parser.add_argument("--language", type=str, default="en")
     parser.add_argument("--human_location", type=str, default="human")
@@ -717,9 +716,6 @@ def load_base_model_and_tokenizer(name):
         print("Using non-fast tokenizer for OPT")
         optional_tok_kwargs["fast"] = False
 
-    if args.dataset in ["pubmed"]:
-        optional_tok_kwargs["padding_side"] = "left"
-
     base_tokenizer = transformers.AutoTokenizer.from_pretrained(
         name, **optional_tok_kwargs, cache_dir=cache_dir
     )
@@ -833,7 +829,7 @@ if __name__ == "__main__":
     ).replace("/", "_")
 
     # Define the save folder
-    TEMP_DIR = f"tmp_results/{output_subfolder}{base_model_name}{scoring_model_string}-{args.mask_filling_model_name}-{sampling_string}/{START_DATE}-{START_TIME}-{precision_string}-{args.pct_words_masked}-{args.n_perturbation_rounds}-{args.dataset}-{args.n_samples}"
+    TEMP_DIR = f"tmp_results/{output_subfolder}{base_model_name}{scoring_model_string}-{args.mask_filling_model_name}-{sampling_string}/{START_DATE}-{START_TIME}-{precision_string}-{args.pct_words_masked}-{args.n_perturbation_rounds}-{args.n_samples}"
     SAVE_FOLDER = os.path.join(args.save_dir, TEMP_DIR)
     os.makedirs(SAVE_FOLDER, exist_ok=True)
 
@@ -894,12 +890,8 @@ if __name__ == "__main__":
     mask_tokenizer = transformers.AutoTokenizer.from_pretrained(
         mask_filling_model_name, model_max_length=n_positions, cache_dir=cache_dir
     )
-    if args.dataset in ["english", "german"]:
-        preproc_tokenizer = mask_tokenizer
 
     load_base_model()
-
-    print(f"Loading dataset {args.dataset}...")
 
     data_loader = DetectionDataset(
         language=args.language,
