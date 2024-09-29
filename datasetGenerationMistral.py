@@ -72,10 +72,9 @@ def generate_text(args):
     device = torch.device(args.device if torch.cuda.is_available() else "cpu")
     model = MistralForCausalLM.from_pretrained(
         args.model_id,
-        device_map="auto",
-        # trust_remote_code=True,
         torch_dtype=torch.bfloat16 if torch.cuda.is_available() else torch.float32,
     )
+    model = model.to(device)
     tokenizer = LlamaTokenizerFast.from_pretrained(args.model_id)
     tokenizer.pad_token = tokenizer.eos_token
 
@@ -103,31 +102,50 @@ def generate_text(args):
                 print(f"Title: {title}")
                 print(f"Sentence: {sentence}")
 
-                # Define the prompt
+                # Define the user prompt and messages
                 user_prompt = create_prompt(
                     title=title,
                     sentence=sentence,
                     article_length=article_length,
                     language=language,
                 )
-                # Tokenize input and move to GPU
-                inputs = tokenizer(user_prompt, return_tensors="pt").to(device)
+
+                messages = [
+                    {"role": "user", "content": user_prompt},
+                ]
+
+                # Prepare model input using the chat template
+                chat_input = tokenizer.apply_chat_template(
+                    messages,
+                    tokenize=False,
+                    add_generation_prompt=True,
+                    return_tensors="pt",
+                )
+
+                model_inputs = tokenizer([chat_input], return_tensors="pt").to(device)
 
                 # Generate output
                 with torch.no_grad():
-                    generate_ids = model.generate(
-                        inputs.input_ids,
-                        attention_mask=inputs.attention_mask,
+                    generated_ids = model.generate(
+                        **model_inputs,
                         do_sample=True,
-                        max_length=args.max_length,
+                        max_new_tokens=args.max_length,
                         temperature=args.temperature,
                         top_p=0.9,
                     )
 
-                # Decode the generated article
-                generated_text = tokenizer.decode(
-                    generate_ids[0], skip_special_tokens=True
-                )
+                # Extract only the newly generated tokens (ignore input tokens)
+                generated_ids = [
+                    output_ids[len(input_ids) :]
+                    for input_ids, output_ids in zip(
+                        model_inputs.input_ids, generated_ids
+                    )
+                ]
+
+                # Decode the generated text
+                generated_text = tokenizer.batch_decode(
+                    generated_ids, skip_special_tokens=True
+                )[0]
 
                 # Save output
                 output_file_path = os.path.join(destination_dir, file_name)
@@ -135,7 +153,7 @@ def generate_text(args):
                     output_file.write(f"{title}\n\n{generated_text}")
 
     print(
-        f"Article generation complete! Files saved in '{args.target_folder}mistral/'."
+        f"Article generation complete! Files saved in '{args.target_folder}/mistral/'."
     )
 
 

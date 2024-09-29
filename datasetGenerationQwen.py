@@ -110,17 +110,11 @@ def generate_text(args):
                     language=language,
                 )
 
-                # Create messages for the system role
-                system_message = {
-                    "role": "system",
-                    "content": "You are Qwen, created by Alibaba Cloud. You are a helpful assistant.",
-                }
-                user_message = {"role": "user", "content": user_prompt}
-                messages = [system_message, user_message]
+                user_message = [{"role": "user", "content": user_prompt}]
 
                 # Prepare inputs for the model using the new template and method
                 chat_input = tokenizer.apply_chat_template(
-                    messages, tokenize=False, add_generation_prompt=True
+                    user_message, tokenize=False, add_generation_prompt=True
                 )
                 model_inputs = tokenizer([chat_input], return_tensors="pt").to(device)
 
