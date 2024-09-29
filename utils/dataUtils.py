@@ -1,5 +1,5 @@
 import os, wget, tarfile, jieba, fugashi
-from re import sub, findall
+from re import sub, findall, search
 from tqdm import tqdm
 from pathlib import Path
 from utils.constants import *
@@ -279,10 +279,27 @@ def count_document_lengths(directory: str = DATA_PATH):
 
 
 # For dataset generation
-def extract_title_and_sentence(text):
-    # Extract title: First element in list
-    sents = text.split("\n")
-    sents = list(filter(None, sents))
-    title, sentence = sents[0], sents[1]
+def extract_title_and_sentence(text: str, language: str = "en"):
+    # Split the text by lines
+    lines = text.strip().split("\n")
+
+    # The title is the first non-empty line
+    title = lines[0].strip() if lines else "No Title Found"
+
+    # Find the first sentence in the remaining text
+    remaining_text = " ".join(lines[1:]).strip()  # Join everything after the title
+
+    if language == "zh":
+        sentence_match = search(
+            r"([^。！？]*[。！？])", remaining_text
+        )  # Typical Chinese punctuation
+
+    else:
+        sentence_match = search(r"([^.]*?\.)", remaining_text)
+
+    # Get the first sentence or a default message if not found
+    sentence = (
+        sentence_match.group(1).strip() if sentence_match else "No sentence found"
+    )
 
     return title, sentence
