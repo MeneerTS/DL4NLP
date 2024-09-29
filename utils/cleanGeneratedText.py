@@ -26,7 +26,7 @@ def clean_mistral_articles(languages: list = ["en", "zh", "de", "id", "ru"]):
 
     for language in languages:
 
-        source_dir = f"{MISTRAL_PATH}\\{language}_files"
+        source_dir = os.path.join(MISTRAL_PATH, f"{language}_files")
 
         for file in os.listdir(source_dir):
 
@@ -53,7 +53,7 @@ def clean_qwen_articles(languages: list = ["en", "zh", "de", "id", "ru"]):
 
     for language in languages:
 
-        source_dir = f"{QWEN_PATH}\\{language}_files"
+        source_dir = os.path.join(QWEN_PATH, f"{language}_files")
 
         for file in os.listdir(source_dir):
 
