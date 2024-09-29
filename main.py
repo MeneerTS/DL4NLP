@@ -11,6 +11,58 @@ from sklearn.metrics import roc_curve, precision_recall_curve, auc
 pattern = re.compile(r"<extra_id_\d+>")
 
 
+def config():
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--dataset", type=str, default="xsum")
+    parser.add_argument("--dataset_key", type=str, default="document")
+    parser.add_argument("--language", type=str, default="en")
+    parser.add_argument("--human_location", type=str, default="human")
+    parser.add_argument("--ai_location", type=str, default="mistral")
+    parser.add_argument("--sentence_mode", type=bool, default=True)
+    parser.add_argument("--n_sentences", type=int, default=1)
+    parser.add_argument("--save_dir", type=str, default="", required=True)
+    parser.add_argument(
+        "--pct_words_masked", type=float, default=0.3
+    )  # pct masked is actually pct_words_masked * (span_length / (span_length + 2 * buffer_size))
+    parser.add_argument("--span_length", type=int, default=2)
+    parser.add_argument("--n_samples", type=int, default=200)
+    parser.add_argument("--n_perturbation_list", type=str, default="100")
+    parser.add_argument("--n_perturbation_rounds", type=int, default=1)
+    parser.add_argument(
+        "--base_model_name", type=str, default="EleutherAI/gpt-neo-125M"
+    )
+    parser.add_argument("--scoring_model_name", type=str, default="")
+    parser.add_argument(
+        "--mask_filling_model_name", type=str, default="google-t5/t5-small"
+    )
+    parser.add_argument("--batch_size", type=int, default=50)
+    parser.add_argument("--chunk_size", type=int, default=20)
+    parser.add_argument("--n_similarity_samples", type=int, default=20)
+    parser.add_argument("--int8", action="store_true")
+    parser.add_argument("--half", action="store_true")
+    parser.add_argument("--base_half", action="store_true")
+    parser.add_argument("--do_top_k", action="store_true")
+    parser.add_argument("--top_k", type=int, default=40)
+    parser.add_argument("--do_top_p", action="store_true")
+    parser.add_argument("--top_p", type=float, default=0.96)
+    parser.add_argument("--output_name", type=str, default="")
+    parser.add_argument("--openai_model", type=str, default=None)
+    parser.add_argument("--openai_key", type=str)
+    parser.add_argument("--baselines_only", action="store_true")
+    parser.add_argument("--skip_baselines", action="store_true", default="true")
+    parser.add_argument("--buffer_size", type=int, default=1)
+    parser.add_argument("--mask_top_p", type=float, default=1.0)
+    parser.add_argument("--pre_perturb_pct", type=float, default=0.0)
+    parser.add_argument("--pre_perturb_span_length", type=int, default=5)
+    parser.add_argument("--random_fills", action="store_true")
+    parser.add_argument("--random_fills_tokens", action="store_true")
+    parser.add_argument("--cache_dir", type=str, default="cache2")
+    print(args.cache_dir)
+
+    return parser.parse_args()
+
+
 def load_base_model():
 
     print("MOVING BASE MODEL TO GPU...", end="", flush=True)
@@ -751,53 +803,7 @@ if __name__ == "__main__":
 
     DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--dataset", type=str, default="xsum")
-    parser.add_argument("--dataset_key", type=str, default="document")
-    parser.add_argument("--language", type=str, default="en")
-    parser.add_argument("--human_location", type=str, default="human")
-    parser.add_argument("--ai_location", type=str, default="mistral")
-    parser.add_argument("--sentence_mode", type=bool, default=True)
-    parser.add_argument("--n_sentences", type=int, default=1)
-    parser.add_argument("--save_dir", type=str, default="", required=True)
-    parser.add_argument(
-        "--pct_words_masked", type=float, default=0.3
-    )  # pct masked is actually pct_words_masked * (span_length / (span_length + 2 * buffer_size))
-    parser.add_argument("--span_length", type=int, default=2)
-    parser.add_argument("--n_samples", type=int, default=200)
-    parser.add_argument("--n_perturbation_list", type=str, default="100")
-    parser.add_argument("--n_perturbation_rounds", type=int, default=1)
-    parser.add_argument(
-        "--base_model_name", type=str, default="EleutherAI/gpt-neo-125M"
-    )
-    parser.add_argument("--scoring_model_name", type=str, default="")
-    parser.add_argument(
-        "--mask_filling_model_name", type=str, default="google-t5/t5-small"
-    )
-    parser.add_argument("--batch_size", type=int, default=50)
-    parser.add_argument("--chunk_size", type=int, default=20)
-    parser.add_argument("--n_similarity_samples", type=int, default=20)
-    parser.add_argument("--int8", action="store_true")
-    parser.add_argument("--half", action="store_true")
-    parser.add_argument("--base_half", action="store_true")
-    parser.add_argument("--do_top_k", action="store_true")
-    parser.add_argument("--top_k", type=int, default=40)
-    parser.add_argument("--do_top_p", action="store_true")
-    parser.add_argument("--top_p", type=float, default=0.96)
-    parser.add_argument("--output_name", type=str, default="")
-    parser.add_argument("--openai_model", type=str, default=None)
-    parser.add_argument("--openai_key", type=str)
-    parser.add_argument("--baselines_only", action="store_true")
-    parser.add_argument("--skip_baselines", action="store_true", default="true")
-    parser.add_argument("--buffer_size", type=int, default=1)
-    parser.add_argument("--mask_top_p", type=float, default=1.0)
-    parser.add_argument("--pre_perturb_pct", type=float, default=0.0)
-    parser.add_argument("--pre_perturb_span_length", type=int, default=5)
-    parser.add_argument("--random_fills", action="store_true")
-    parser.add_argument("--random_fills_tokens", action="store_true")
-    parser.add_argument("--cache_dir", type=str, default="cache2")
-    args = parser.parse_args(args=[])
-    print(args.cache_dir)
+    args = config()
 
     API_TOKEN_COUNTER = 0
 
