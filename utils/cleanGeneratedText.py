@@ -6,6 +6,16 @@ from utils.dataUtils import get_article_text
 # Base filter function
 def filter_merge_sentences(sentences: list, remove_start: int = 2):
 
+    filter_terms = [
+        "user",
+        "Maaf",
+        "Mohon Maaf",
+        "RecognitionException",
+        "Baik",
+        "Tolong",
+        "Bitte ignorieren",
+        "Entschuldigung, aber",
+    ]
     if sentences[remove_start:] == []:
         return "None"
 
@@ -14,9 +24,11 @@ def filter_merge_sentences(sentences: list, remove_start: int = 2):
         sent
         for sent in new_sents
         if (
-            "word count" not in sent.lower()
-            and "---" not in sent.lower()
-            and len(sent) > 10
+            "word count" not in sent.lower()  # Remove counts
+            and len(sent) > 18  # Remove very short (likely useless sentences)
+            and "user"
+            not in sent  # The Indonesian dataset frequently encounters these (and the below) issues
+            and not any([term in sent for term in filter_terms])
         )
     ]
 

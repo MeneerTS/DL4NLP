@@ -650,8 +650,10 @@ def load_base_model_and_tokenizer(name):
         base_model_kwargs = {}
         if "gpt-j" in name or "neox" in name:
             base_model_kwargs.update(dict(torch_dtype=torch.float16))
+
         if "gpt-j" in name:
             base_model_kwargs.update(dict(revision="float16"))
+
         base_model = transformers.AutoModelForCausalLM.from_pretrained(
             name, **base_model_kwargs, cache_dir=cache_dir
         )
@@ -663,8 +665,10 @@ def load_base_model_and_tokenizer(name):
     if "facebook/opt-" in name:
         print("Using non-fast tokenizer for OPT")
         optional_tok_kwargs["fast"] = False
+
     if args.dataset in ["pubmed"]:
         optional_tok_kwargs["padding_side"] = "left"
+
     base_tokenizer = transformers.AutoTokenizer.from_pretrained(
         name, **optional_tok_kwargs, cache_dir=cache_dir
     )
@@ -745,7 +749,7 @@ def eval_supervised(data, model):
 
 if __name__ == "__main__":
 
-    DEVICE = "cuda"
+    DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", type=str, default="xsum")
@@ -755,6 +759,7 @@ if __name__ == "__main__":
     parser.add_argument("--ai_location", type=str, default="mistral")
     parser.add_argument("--sentence_mode", type=bool, default=True)
     parser.add_argument("--n_sentences", type=int, default=1)
+    parser.add_argument("--save_dir", type=str, default="", required=True)
     parser.add_argument(
         "--pct_words_masked", type=float, default=0.3
     )  # pct masked is actually pct_words_masked * (span_length / (span_length + 2 * buffer_size))
@@ -821,9 +826,12 @@ if __name__ == "__main__":
     scoring_model_string = (
         f"-{args.scoring_model_name}" if args.scoring_model_name else ""
     ).replace("/", "_")
-    SAVE_FOLDER = f"tmp_results/{output_subfolder}{base_model_name}{scoring_model_string}-{args.mask_filling_model_name}-{sampling_string}/{START_DATE}-{START_TIME}-{precision_string}-{args.pct_words_masked}-{args.n_perturbation_rounds}-{args.dataset}-{args.n_samples}"
-    if not os.path.exists(SAVE_FOLDER):
-        os.makedirs(SAVE_FOLDER)
+
+    # Define the save folder
+    TEMP_DIR = f"tmp_results/{output_subfolder}{base_model_name}{scoring_model_string}-{args.mask_filling_model_name}-{sampling_string}/{START_DATE}-{START_TIME}-{precision_string}-{args.pct_words_masked}-{args.n_perturbation_rounds}-{args.dataset}-{args.n_samples}"
+    SAVE_FOLDER = os.path.join(args.save_dir, TEMP_DIR)
+    os.makedirs(SAVE_FOLDER, exist_ok=True)
+
     print(f"Saving results to absolute path: {os.path.abspath(SAVE_FOLDER)}")
 
     # write args to file
@@ -839,8 +847,7 @@ if __name__ == "__main__":
 
     cache_dir = args.cache_dir
     os.environ["XDG_CACHE_HOME"] = cache_dir
-    if not os.path.exists(cache_dir):
-        os.makedirs(cache_dir)
+    os.makedirs(cache_dir, exist_ok=True)
     print(f"Using cache dir {cache_dir}")
 
     print("+" * 100)
@@ -1036,8 +1043,7 @@ if __name__ == "__main__":
 
     # move results folder from tmp_results/ to results/, making sure necessary directories exist
     new_folder = SAVE_FOLDER.replace("tmp_results", "results")
-    if not os.path.exists(os.path.dirname(new_folder)):
-        os.makedirs(os.path.dirname(new_folder))
+    os.makedirs(new_folder, exist_ok=True)
     os.rename(SAVE_FOLDER, new_folder)
 
     print(f"Used an *estimated* {API_TOKEN_COUNTER} API tokens (may be inaccurate)")
