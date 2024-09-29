@@ -101,74 +101,86 @@ def generate_text(args):
                 print(f"Title: {title}")
                 print(f"Sentence: {sentence}")
 
-                # Define the prompt
-                input_doc = ""
+                # Define the prompt based on language
                 if language == "en":
-                    input_doc = (
+                    user_prompt = (
                         f"Write a news article with the following headline in English: '{title}'. "
                         f"Start your article with the following sentence: '{sentence}'. "
                         "Do not print the title and do not include separate headlines in the article."
                         f"The article should be approximately {article_length} words, with the maximum difference of 100 words."
                     )
                 elif language == "de":
-                    input_doc = (
+                    user_prompt = (
                         f"Schreiben Sie einen Nachrichtenartikel mit der folgenden Überschrift: '{title}'. "
                         f"Beginnen Sie Ihren Artikel mit folgendem Satz: '{sentence}'. "
                         "Drucken Sie den Titel nicht und fügen Sie keine separaten Überschriften in den Artikel ein."
                         f"Der Artikel sollte ungefähr {article_length} Wörter lang sein, mit einer maximalen Abweichung von 100 Wörtern."
                     )
                 elif language == "id":
-                    input_doc = (
+                    user_prompt = (
                         f"Tulislah artikel berita dengan judul berikut: '{title}'. "
                         f"Mulailah artikel Anda dengan kalimat berikut: '{sentence}'. "
                         "Jangan mencetak judul dan jangan menyertakan judul terpisah di dalam artikel."
                         f"Artikel tersebut harus memiliki panjang sekitar {article_length} kata, dengan perbedaan maksimal 100 kata."
                     )
                 elif language == "ru":
-                    input_doc = (
+                    user_prompt = (
                         f"Напишите новостную статью со следующим заголовком: '{title}'. "
                         f"Начните свою статью со следующего предложения: '{sentence}'. "
                         "Не печатайте заголовок и не включайте отдельные подзаголовки в статью."
                         f"Статья должна быть приблизительно {article_length} слов, с максимальной разницей в 100 слов."
                     )
                 elif language == "zh":
-                    input_doc = (
+                    user_prompt = (
                         f"用以下标题写一篇新闻文章: '{title}'。"
                         f"用以下句子开始你的文章: '{sentence}'。"
                         "不要打印标题，也不要在文章中包含单独的标题。"
                         f"文章的长度应大约为 {article_length} 字符，最大差异为 50 字符。"
                     )
 
-                # Tokenize input and move to GPU
-                messages = [{"role": "user", "content": input_doc}]
+                # Create messages for the system role
+                system_message = {
+                    "role": "system",
+                    "content": "You are Qwen, created by Alibaba Cloud. You are a helpful assistant.",
+                }
+                user_message = {"role": "user", "content": user_prompt}
+                messages = [system_message, user_message]
 
-                chat = tokenizer.apply_chat_template(
-                    messages, tokenize=False, add_generation_prompt=False
+                # Prepare inputs for the model using the new template and method
+                chat_input = tokenizer.apply_chat_template(
+                    messages, tokenize=False, add_generation_prompt=True
                 )
-                inputs = tokenizer([chat], return_tensors="pt").to(device)
+                model_inputs = tokenizer([chat_input], return_tensors="pt").to(device)
 
-                # Generate output
+                # Generate output using the model
                 with torch.no_grad():
-                    generate_ids = model.generate(
-                        inputs.input_ids,
-                        attention_mask=inputs.attention_mask,
+                    generated_ids = model.generate(
+                        **model_inputs,
+                        max_new_tokens=args.max_length,
                         do_sample=True,
-                        max_length=args.max_length,
                         temperature=args.temperature,
                         top_p=0.9,
                     )
 
-                # Decode the generated article
-                generated_text = tokenizer.decode(
-                    generate_ids[0], skip_special_tokens=True
-                )
+                # Extract only the newly generated tokens (ignore input tokens)
+                generated_ids = [
+                    output_ids[len(input_ids) :]
+                    for input_ids, output_ids in zip(
+                        model_inputs.input_ids, generated_ids
+                    )
+                ]
 
-                # Save output
+                # Decode the generated text
+                generated_text = tokenizer.batch_decode(
+                    generated_ids, skip_special_tokens=True
+                )[0]
+
+                # Save the generated article
                 output_file_path = os.path.join(destination_dir, file_name)
                 with open(output_file_path, "w", encoding="utf-8") as output_file:
                     output_file.write(f"{title}\n\n{generated_text}")
 
-    print(f"Article generation complete! Files saved in '{args.target_folder}qwen/'.")
+    print(f"Article generation complete! Files saved in '{args.target_folder}/qwen/'.")
 
 
 if __name__ == "__main__":
@@ -177,6 +189,6 @@ if __name__ == "__main__":
     set_seed_all(args.seed)
     generate_text(args)
 
-    print("Cleaning files...")
-    clean_qwen_articles(args.languages)
-    print("Cleaning done!\n")
+    # print("Cleaning files...")
+    # clean_qwen_articles(args.languages)
+    # print("Cleaning done!\n")
