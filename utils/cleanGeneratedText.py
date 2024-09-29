@@ -32,8 +32,8 @@ def clean_mistral_articles(languages: list = ["en", "zh", "de", "id", "ru"]):
 
             if file.endswith(".txt"):
 
-                fullname = os.path.join(source_dir, file)
-                text = get_article_text(fullname, remove_n=False)
+                fullpath = os.path.join(source_dir, file)
+                text = get_article_text(fullpath, remove_n=False)
 
                 sentences = text.split("\n")
                 title = sentences[0]
@@ -43,7 +43,7 @@ def clean_mistral_articles(languages: list = ["en", "zh", "de", "id", "ru"]):
 
                 new_text = f"""{title}\n\n{joined}"""
 
-                with open(fullname, "w+") as f:
+                with open(fullpath, "w+", encoding="utf-8") as f:
 
                     f.write(new_text)
 
@@ -59,8 +59,8 @@ def clean_qwen_articles(languages: list = ["en", "zh", "de", "id", "ru"]):
 
             if file.endswith(".txt"):
 
-                fullname = os.path.join(source_dir, file)
-                text = get_article_text(fullname, remove_n=False)
+                fullpath = os.path.join(source_dir, file)
+                text = get_article_text(fullpath, remove_n=False)
 
                 sentences = text.split("\n")
                 title = sentences[0]
@@ -70,6 +70,6 @@ def clean_qwen_articles(languages: list = ["en", "zh", "de", "id", "ru"]):
 
                 new_text = f"""{title}\n\n{joined}"""
 
-                with open(fullname, "w+") as f:
+                with open(fullpath, "w+", encoding="utf-8") as f:
 
                     f.write(new_text)

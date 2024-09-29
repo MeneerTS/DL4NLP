@@ -99,7 +99,7 @@ def get_article_text(
     The contents of that article file, cleaned.
     """
     # Get the text contents
-    with open(directory, "r") as f:
+    with open(directory, "r", encoding="utf-8") as f:
         text = f.read()
 
     # Clean text
@@ -191,7 +191,7 @@ def clean_data(directory: str = DATA_PATH):
                             full_text = f"{title}\n\n{text_content}"
 
                             try:
-                                with open(fullpath, "w") as f:
+                                with open(fullpath, "w", encoding="utf-8") as f:
                                     f.write(full_text)
 
                             except Exception as e:

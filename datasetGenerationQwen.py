@@ -12,7 +12,7 @@ from utils.dataUtils import (
 
 token = os.getenv("HF_TOKEN")
 if not token:
-    with open("token.json") as f:
+    with open("token.json", encoding="utf-8") as f:
         token = json.load(f)["token"]
         login(token=token)
 
