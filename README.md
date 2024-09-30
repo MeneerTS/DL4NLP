@@ -78,6 +78,8 @@ python datasetGenerationQwen.py \
     --target_folder "" # Where you want the Qwen files to be located in
 ```
 
+Do note that this process takes a long time, so perhaps it is better to download the files [here](https://amsuni-my.sharepoint.com/:f:/g/personal/gregory_go_student_uva_nl/EnzVCZAaSUJDvB-F66VVW-8B_BrvOwz_XSEB5N1_CDBezA?e=gctad6).
+
 All the selected filenames can be found/loaded from the `articles.txt` file.
 
 _Note: To generate articles using LLaMA, GPT, and Mistral, you need an API token (a paid one in the case of GPT)._
