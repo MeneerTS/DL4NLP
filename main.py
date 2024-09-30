@@ -18,8 +18,8 @@ def config():
     parser.add_argument("--language", type=str, default="en")
     parser.add_argument("--human_location", type=str, default="human")
     parser.add_argument("--ai_location", type=str, default="mistral")
-    parser.add_argument("--sentence_mode", type=bool, default=True)
-    parser.add_argument("--n_sentences", type=int, default=1)
+    parser.add_argument("--sentence_mode", type=bool, default=False)
+    parser.add_argument("--n_sentences", type=int, default=5)
     parser.add_argument("--save_dir", type=str, default="", required=True)
     parser.add_argument(
         "--pct_words_masked", type=float, default=0.3
@@ -33,7 +33,7 @@ def config():
     )
     parser.add_argument("--scoring_model_name", type=str, default="")
     parser.add_argument(
-        "--mask_filling_model_name", type=str, default="google-t5/t5-small"
+        "--mask_filling_model_name", type=str, default="google-t5/t5-large"
     )
     parser.add_argument("--batch_size", type=int, default=50)
     parser.add_argument("--chunk_size", type=int, default=20)
