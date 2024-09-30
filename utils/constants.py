@@ -1,5 +1,5 @@
 # File to store constant variables
-import os
+import os, re
 from lingua import Language
 
 # For downloading the data
@@ -78,3 +78,7 @@ DONE_DIR = os.path.join(DATA_PATH, "done.txt")
 HUMAN_PATH = "human"
 QWEN_PATH = "qwen"
 MISTRAL_PATH = "mistral"
+
+# Regex patterns for filtering
+SENTENCE_PATTERN_EN = re.compile(r"\s*([^.!?]*[.!?])")
+SENTENCE_PATTERN_ZH = re.compile(r"\s*([^。！？]*[。！？])")

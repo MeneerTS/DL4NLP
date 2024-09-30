@@ -21,7 +21,7 @@ def filter_merge_sentences(sentences: list, remove_start: int = 2):
 
     new_sents = list(filter(None, sentences))[remove_start:]
     new_sents = [
-        sent
+        sent.strip()
         for sent in new_sents
         if (
             "word count" not in sent.lower()  # Remove counts

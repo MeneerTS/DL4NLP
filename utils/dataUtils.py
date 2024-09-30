@@ -279,25 +279,39 @@ def count_document_lengths(directory: str = DATA_PATH):
 
 
 # For dataset generation
+
+
 def extract_title_and_sentence(text: str, language: str = "en"):
+    """
+    Extracts the title (first non-empty line) and the first sentence from the text.
+    Arguments:
+    text (str): The text to process.
+    language (str): The language of the text (default is 'en' for English).
+
+    Returns:
+    A tuple containing the title and the first sentence found.
+    """
     # Split the text by lines
     lines = text.strip().split("\n")
-
-    # The title is the first non-empty line
     title = lines[0].strip() if lines else "No Title Found"
 
-    # Find the first sentence in the remaining text
-    remaining_text = " ".join(lines[1:]).strip()  # Join everything after the title
+    # Join the remaining lines (everything after the title)
+    remaining_text = " ".join(lines[1:]).strip() if len(lines) > 1 else ""
 
+    if not remaining_text:
+        return title, "No sentence found"
+
+    # Use the appropriate regex based on the language
     if language == "zh":
-        sentence_match = search(
-            r"([^。！？]*[。！？])", remaining_text
-        )  # Typical Chinese punctuation
+        sentence_pattern = SENTENCE_PATTERN_ZH
 
     else:
-        sentence_match = search(r"([^.]*?\.)", remaining_text)
+        sentence_pattern = SENTENCE_PATTERN_EN
 
-    # Get the first sentence or a default message if not found
+    # Find the first sentence in the remaining text
+    sentence_match = sentence_pattern.search(remaining_text)
+
+    # Extract the first sentence or a default message if not found
     sentence = (
         sentence_match.group(1).strip() if sentence_match else "No sentence found"
     )

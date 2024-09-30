@@ -97,7 +97,7 @@ class DetectionDataset(Dataset):
 
         # Return sample sentence if enabled
         if self.sentence_mode:
-            text = get_sample_sentence(text, self.n_sentences)
+            text = get_sample_sentence(text, self.n_sentences, self.language)
 
         return text, label
 
@@ -114,25 +114,17 @@ def get_sample_sentence(text: str, n_sentences: int = 1, language: str = "en"):
     Returns:
     A list of sampled sentences.
     """
-    # First split the sentences
-    lines = text.strip().split("\n")
-
-    # Find the sentences in the remaining text
-    remaining_text = " ".join(lines[1:]).strip()
-
     if language.lower() == "zh":
-        sentence_pattern = r"([^。！？]*[。！？])"
+        sentence_pattern = SENTENCE_PATTERN_ZH
 
     else:
-        sentence_pattern = r"([^.!?]*[.!?])"
+        sentence_pattern = SENTENCE_PATTERN_EN
 
-    sentences = re.findall(sentence_pattern, remaining_text)
+    # Find all sentences (from the whole text without splitting/joining lines)
+    sentences = sentence_pattern.findall(text)
 
-    # Clip n_sentences if it's larger than the number of available sentences
-    n_sentences = min(n_sentences, len(sentences))
-
-    # Return the specified number of sentences
-    return sentences[:n_sentences]
+    # Return the requested number of sentences, excluding the first one
+    return "\n".join(sentences[1 : n_sentences + 1])
 
 
 def select_universal_files(langs: list = ["en"], directory: str = DATA_PATH):
