@@ -1,14 +1,19 @@
-import torch, os, re, transformers, tqdm, random, argparse, datetime, json, functools, time
+import torch, os, random, argparse, datetime, json, functools, time
 import numpy as np
 import matplotlib.pyplot as plt
 import torch.nn.functional as F
-from utils.dataLoader import DetectionDataset
-from utils.constants import COLORS
+from tqdm import tqdm
 from multiprocessing.pool import ThreadPool
+from utils.dataLoader import DetectionDataset
+from utils.constants import COLORS, ID_PATTERN
 from sklearn.metrics import roc_curve, precision_recall_curve, auc
-
-# define regex to match all <extra_id_*> tokens, where * is an integer
-pattern = re.compile(r"<extra_id_\d+>")
+from transformers import (
+    GPT2Tokenizer,
+    AutoTokenizer,
+    AutoModelForCausalLM,
+    AutoModelForSeq2SeqLM,
+    AutoModelForSequenceClassification,
+)
 
 
 def config():
@@ -21,6 +26,7 @@ def config():
     parser.add_argument("--sentence_mode", type=bool, default=False)
     parser.add_argument("--n_sentences", type=int, default=5)
     parser.add_argument("--save_dir", type=str, default="", required=True)
+    parser.add_argument("--use_cpu", action="store_true")
     parser.add_argument(
         "--pct_words_masked", type=float, default=0.3
     )  # pct masked is actually pct_words_masked * (span_length / (span_length + 2 * buffer_size))
@@ -156,7 +162,7 @@ def extract_fills(texts):
     texts = [x.replace("<pad>", "").replace("</s>", "").strip() for x in texts]
 
     # return the text in between each matched mask token
-    extracted_fills = [pattern.split(x)[1:-1] for x in texts]
+    extracted_fills = [ID_PATTERN.split(x)[1:-1] for x in texts]
 
     # remove whitespace around each fill
     extracted_fills = [[y.strip() for y in x] for x in extracted_fills]
@@ -181,6 +187,7 @@ def apply_extracted_fills(masked_texts, extracted_fills):
 
     # join tokens back into text
     texts = [" ".join(x) for x in tokens]
+
     return texts
 
 
@@ -267,7 +274,7 @@ def perturb_texts(texts, span_length, pct, ceil_pct=False):
         chunk_size //= 2
 
     outputs = []
-    for i in tqdm.tqdm(range(0, len(texts), chunk_size), desc="Applying perturbations"):
+    for i in tqdm(range(0, len(texts), chunk_size), desc="Applying perturbations"):
         outputs.extend(
             perturb_texts_(
                 texts[i : i + chunk_size], span_length, pct, ceil_pct=ceil_pct
@@ -327,6 +334,7 @@ def get_lls(texts):
 
 # Get the average rank of each observed token sorted by model likelihood
 def get_rank(text, log=False):
+
     assert args.openai_model is None, "get_rank not implemented for OpenAI models"
 
     with torch.no_grad():
@@ -359,6 +367,7 @@ def get_rank(text, log=False):
 
 # get average entropy of each token in the text
 def get_entropy(text):
+
     assert args.openai_model is None, "get_entropy not implemented for OpenAI models"
 
     with torch.no_grad():
@@ -554,7 +563,7 @@ def get_perturbation_results(span_length=10, n_perturbations=1, n_samples=500):
 
     load_base_model()
 
-    for res in tqdm.tqdm(results, desc="Computing log likelihoods"):
+    for res in tqdm(results, desc="Computing log likelihoods"):
         p_sampled_ll = get_lls(res["perturbed_sampled"])
         p_original_ll = get_lls(res["perturbed_original"])
         res["original_ll"] = get_ll(res["original"])
@@ -641,11 +650,12 @@ def run_perturbation_experiment(
 
 
 def run_baseline_threshold_experiment(criterion_fn, name, n_samples=500):
+
     torch.manual_seed(0)
     np.random.seed(0)
 
     results = []
-    for batch in tqdm.tqdm(
+    for batch in tqdm(
         range(n_samples // batch_size), desc=f"Computing {name} criterion"
     ):
         original_text = data["original"][batch * batch_size : (batch + 1) * batch_size]
@@ -704,7 +714,7 @@ def load_base_model_and_tokenizer(name):
         if "gpt-j" in name:
             base_model_kwargs.update(dict(revision="float16"))
 
-        base_model = transformers.AutoModelForCausalLM.from_pretrained(
+        base_model = AutoModelForCausalLM.from_pretrained(
             name, **base_model_kwargs, cache_dir=cache_dir
         )
 
@@ -716,7 +726,7 @@ def load_base_model_and_tokenizer(name):
         print("Using non-fast tokenizer for OPT")
         optional_tok_kwargs["fast"] = False
 
-    base_tokenizer = transformers.AutoTokenizer.from_pretrained(
+    base_tokenizer = AutoTokenizer.from_pretrained(
         name, **optional_tok_kwargs, cache_dir=cache_dir
     )
     base_tokenizer.pad_token_id = base_tokenizer.eos_token_id
@@ -727,17 +737,17 @@ def load_base_model_and_tokenizer(name):
 def eval_supervised(data, model):
 
     print(f"Beginning supervised evaluation with {model}...")
-    detector = transformers.AutoModelForSequenceClassification.from_pretrained(
+    detector = AutoModelForSequenceClassification.from_pretrained(
         model, cache_dir=cache_dir
     ).to(DEVICE)
-    tokenizer = transformers.AutoTokenizer.from_pretrained(model, cache_dir=cache_dir)
+    tokenizer = AutoTokenizer.from_pretrained(model, cache_dir=cache_dir)
 
     real, fake = data["original"], data["sampled"]
 
     with torch.no_grad():
         # get predictions for real
         real_preds = []
-        for batch in tqdm.tqdm(range(len(real) // batch_size), desc="Evaluating real"):
+        for batch in tqdm(range(len(real) // batch_size), desc="Evaluating Real"):
             batch_real = real[batch * batch_size : (batch + 1) * batch_size]
             batch_real = tokenizer(
                 batch_real,
@@ -750,7 +760,7 @@ def eval_supervised(data, model):
 
         # get predictions for fake
         fake_preds = []
-        for batch in tqdm.tqdm(range(len(fake) // batch_size), desc="Evaluating fake"):
+        for batch in tqdm(range(len(fake) // batch_size), desc="Evaluating Fake"):
             batch_fake = fake[batch * batch_size : (batch + 1) * batch_size]
             batch_fake = tokenizer(
                 batch_fake,
@@ -796,10 +806,9 @@ def eval_supervised(data, model):
 
 if __name__ == "__main__":
 
-    DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-
     args = config()
 
+    DEVICE = "cuda" if torch.cuda.is_available() and not args.use_cpu else "cpu"
     API_TOKEN_COUNTER = 0
 
     if args.openai_model is not None:
@@ -853,9 +862,7 @@ if __name__ == "__main__":
 
     print("+" * 100)
     print(cache_dir)
-    GPT2_TOKENIZER = transformers.GPT2Tokenizer.from_pretrained(
-        "gpt2", cache_dir=cache_dir
-    )
+    GPT2_TOKENIZER = GPT2Tokenizer.from_pretrained("gpt2", cache_dir=cache_dir)
 
     # Generic generative model
     base_model, base_tokenizer = load_base_model_and_tokenizer(args.base_model_name)
@@ -873,7 +880,7 @@ if __name__ == "__main__":
         elif args.half:
             half_kwargs = dict(torch_dtype=torch.bfloat16)
         print(f"Loading mask filling model {mask_filling_model_name}...")
-        mask_model = transformers.AutoModelForSeq2SeqLM.from_pretrained(
+        mask_model = AutoModelForSeq2SeqLM.from_pretrained(
             mask_filling_model_name, **int8_kwargs, **half_kwargs, cache_dir=cache_dir
         )
         try:
@@ -884,10 +891,10 @@ if __name__ == "__main__":
 
     else:
         n_positions = 512
-    preproc_tokenizer = transformers.AutoTokenizer.from_pretrained(
+    preproc_tokenizer = AutoTokenizer.from_pretrained(
         "t5-small", model_max_length=512, cache_dir=cache_dir
     )
-    mask_tokenizer = transformers.AutoTokenizer.from_pretrained(
+    mask_tokenizer = AutoTokenizer.from_pretrained(
         mask_filling_model_name, model_max_length=n_positions, cache_dir=cache_dir
     )
 
@@ -933,7 +940,7 @@ if __name__ == "__main__":
 
     # write the data to a json file in the save folder
     with open(os.path.join(SAVE_FOLDER, "raw_data.json"), "w") as f:
-        print(f"Writing raw data to {os.path.join(SAVE_FOLDER, 'raw_data.json')}")
+        print(f"Writing raw data to {os.path.join(SAVE_FOLDER, 'raw_data.json')}...")
         json.dump(data, f)
 
     if not args.skip_baselines:
@@ -1034,6 +1041,7 @@ if __name__ == "__main__":
 
         outputs += baseline_outputs
 
+    # saving the outputs
     save_roc_curves(outputs)
     save_ll_histograms(outputs)
     save_llr_histograms(outputs)

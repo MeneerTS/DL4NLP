@@ -97,5 +97,17 @@ _Also, ensure that the folders containing the data are in the same directory as 
 To evaluate the generated datasets, run the following:
 
 ```
-# WIP
+python main.py
+```
+
+This script was adapted from the [DetectGPT Repository](https://github.com/eric-mitchell/detect-gpt), which can be cited through the following:
+
+```
+@misc{mitchell2023detectgpt,
+    url = {https://arxiv.org/abs/2301.11305},
+    author = {Mitchell, Eric and Lee, Yoonho and Khazatsky, Alexander and Manning, Christopher D. and Finn, Chelsea},
+    title = {DetectGPT: Zero-Shot Machine-Generated Text Detection using Probability Curvature},
+    publisher = {arXiv},
+    year = {2023},
+}
 ```

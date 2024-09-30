@@ -80,5 +80,6 @@ QWEN_PATH = "qwen"
 MISTRAL_PATH = "mistral"
 
 # Regex patterns for filtering
+ID_PATTERN = re.compile(r"<extra_id_\d+>")
 SENTENCE_PATTERN_EN = re.compile(r"\s*([^.!?]*[.!?])")
 SENTENCE_PATTERN_ZH = re.compile(r"\s*([^。！？]*[。！？])")
