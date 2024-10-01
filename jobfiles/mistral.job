@@ -1,0 +1,23 @@
+#!/bin/bash
+
+#SBATCH --partition=gpu_h100
+#SBATCH --gpus=2
+#SBATCH --job-name=MistralGenerate
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=18
+#SBATCH --time=5:00:00
+#SBATCH --output=outputs/mistral_%A.out
+
+module purge
+module load 2023
+module load Anaconda3/2023.07-2
+
+cd $HOME/DL4NLP/ # Change with where you want the file to be if desired
+target_f=$HOME/DL4NLP/
+
+source activate dl4nlp_gpu
+srun python -u datasetGenerationMistral.py \
+    --model_id "mistralai/Mistral-Small-Instruct-2409" \
+    --device "cuda" \
+    --languages "en" "id" "zh" "de" "ru" \
+    --target_folder $target_f
