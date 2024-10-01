@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import torch.nn.functional as F
 from tqdm import tqdm
 from multiprocessing.pool import ThreadPool
-from utils.dataLoader import DetectionDataset
+from utils.dataloader import DetectionDataset
 from utils.constants import COLORS, ID_PATTERN
 from sklearn.metrics import roc_curve, precision_recall_curve, auc
 from transformers import (
