@@ -11,7 +11,11 @@ from utils.dataUtils import (
     get_article_text,
     # extract_title_and_sentence,
 )
-
+load_dotenv()
+api_key = os.getenv('OPENAI_API_KEY')
+if not api_key:
+    with open("token.json") as f:
+        api_key = json.load(f)["token"]
 
 def config():
 
@@ -53,18 +57,6 @@ def config():
         help="The source directory",
     )
     parser.add_argument(
-        "--max_length",
-        default=4000,
-        type=int,
-        help="The max length of the model output per prompt in tokens",
-    )
-    parser.add_argument(
-        "--temperature",
-        default=0.6,
-        type=float,
-        help="The model temperature for generation",
-    )
-    parser.add_argument(
         "--target_folder",
         required=True,
         type=str,
@@ -99,8 +91,7 @@ def extract_title_and_sentence(text, language):
 def generate_text(args):
 
     # Set up the pipeline with the Hugging Face token (if needed)
-    load_dotenv()
-    api_key = os.getenv('OPENAI_API_KEY')
+    
 
     client = OpenAI(api_key=api_key)
 
@@ -163,8 +154,8 @@ def generate_text(args):
 if __name__ == "__main__":
 
     args = config()
-    # set_seed_all(args.seed)
-    # generate_text(args)
+    set_seed_all(args.seed)
+    generate_text(args)
 
     print("Cleaning files...")
     clean_gpt_articles(args.languages, f"{args.target_folder}/machine/{args.model_id}")

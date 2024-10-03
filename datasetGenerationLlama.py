@@ -11,7 +11,13 @@ from utils.dataUtils import (
     # extract_title_and_sentence,
 )
 
-
+load_dotenv()
+token = os.getenv("HF_TOKEN")
+if not token:
+    with open("token.json") as f:
+        token = json.load(f)["token"]
+        login(token=token)
+        
 def config():
 
     parser = argparse.ArgumentParser()
@@ -53,7 +59,7 @@ def config():
     )
     parser.add_argument(
         "--max_length",
-        default=4000,
+        default=2000,
         type=int,
         help="The max length of the model output per prompt in tokens",
     )
@@ -95,9 +101,6 @@ def extract_title_and_sentence(text, language):
     return title, sentence
 
 def generate_text(args):
-
-    load_dotenv()
-    token = os.getenv("HF_TOKEN")
     # Set up the pipeline with the Hugging Face token (if needed)
     tokenizer = AutoTokenizer.from_pretrained(
     args.model_id, token=token
@@ -109,14 +112,9 @@ def generate_text(args):
         model=args.model_id,
         tokenizer=tokenizer,
         model_kwargs={"torch_dtype": torch.bfloat16},
-        # model_kwargs={"torch_dtype": torch.float16}, 
         device=args.device,
         token=token,
     )
-    # model = LlamaForCausalLM.from_pretrained("meta-llama/Meta-Llama-3.1-8B", token=token)
-
-    # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    # model = model.to(device)
 
     for language in args.languages: 
     # Define the source and destination directories
@@ -160,46 +158,10 @@ def generate_text(args):
                 user_message = {"role": "user", "content": user_prompt}
                 messages = [system_message, user_message]
 
-                # chat_input = tokenizer.apply_chat_template(
-                #     messages, tokenize=False, add_generation_prompt=True
-                # )
-
-                # model_inputs = tokenizer([chat_input], return_tensors="pt").to(device)
-
-                # Generate output using the model
-                # with torch.no_grad():
-                #     generated_ids = model.generate(
-                #         **model_inputs,
-                #         max_new_tokens=args.max_length,
-                #         do_sample=True,
-                #         temperature=args.temperature,
-                #         top_p=0.9,
-                #     )
-
-                # Extract only the newly generated tokens (ignore input tokens)
-                # generated_ids = [
-                #     output_ids[len(input_ids) :]
-                #     for input_ids, output_ids in zip(
-                #         model_inputs.input_ids, generated_ids
-                #     )
-                # ]
-
-                 # Decode the generated text
-                # generated_text = tokenizer.batch_decode(
-                #     generated_ids, skip_special_tokens=True
-                # )[0]
-                
-                # Define terminators (EOS tokens)
-                terminators = [
-                    pipe.tokenizer.eos_token_id,
-                    pipe.tokenizer.convert_tokens_to_ids("<|eot_id|>"),
-                ]
-
                 # Generate the article using the model
                 outputs = pipe(
                     messages,
                     max_new_tokens=args.max_length,
-                    # eos_token_id=terminators,
                     do_sample=True,
                     temperature=args.temperature,
                     top_p=0.9,
@@ -210,11 +172,9 @@ def generate_text(args):
 
                 # Save the generated article in the destination folder
                 output_file_path = os.path.join(destination_dir, file_name)
-                # print(assistant_response)
-                # break
+  
                 with open(output_file_path, "w", encoding="utf-8") as output_file:
                     output_file.write(f"{title}\n\n{assistant_response}")
-                    # output_file.write(f"{title}\n\n{generated_text}")
 
         print(
             f"Article generation complete! Files saved in '{args.target_folder}/machine/llama-3.1-8B/{language}_files'."

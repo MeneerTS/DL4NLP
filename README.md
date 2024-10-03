@@ -51,11 +51,20 @@ Alternatively, you can run it from the notebook [here](notebooks/example.ipynb) 
 Afterwards, run any of the following for the dataset(s) you want:
 
 ```
-python datasetGenerationLlama.py
+python datasetGenerationLlama.py \
+    --model_id "meta-llama/Meta-Llama-3.1-8B-Instruct" \
+    --device "cuda" \
+    --languages "en" "id" "zh" "de" "ru" \
+    --max_length 2000 \
+    --temperature 0.6 \
+    --target_folder "" # Where you want the Llama files to be located in
 ```
 
 ```
 python datasetGenerationGPT.py
+    --model_id "gpt-4o-mini" \
+    --languages "en" "id" "zh" "de" "ru" \
+    --target_folder "" # Where you want the GPT files to be located in
 ```
 
 ```
