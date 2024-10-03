@@ -24,7 +24,7 @@ def config():
     parser.add_argument("--human_location", type=str, default="human")
     parser.add_argument("--ai_location", type=str, default="mistral")
     parser.add_argument("--sentence_mode", type=bool, default=False)
-    parser.add_argument("--n_samples", type=int, default=50)
+    parser.add_argument("--n_documents", type=int, default=50)
     parser.add_argument("--n_sentences", type=int, default=5)
     parser.add_argument("--save_dir", type=str, default="", required=True)
     parser.add_argument("--use_cpu", action="store_true")
@@ -839,6 +839,7 @@ if __name__ == "__main__":
     ).replace("/", "_")
 
     # Define the save folder
+
     TEMP_DIR = f"tmp_results/{output_subfolder}{base_model_name}{scoring_model_string}-{args.mask_filling_model_name}-{sampling_string}/{START_DATE}-{START_TIME}-{precision_string}-{args.pct_words_masked}-{args.n_perturbation_rounds}-{args.n_samples}"
     SAVE_FOLDER = os.path.join(args.save_dir, TEMP_DIR)
     os.makedirs(SAVE_FOLDER, exist_ok=True)
@@ -907,7 +908,7 @@ if __name__ == "__main__":
         ai_source=args.ai_location,
         sentence_mode=args.sentence_mode,
         n_sentences=args.n_sentences,
-        n_samples=args.n_samples,
+        n_samples=args.n_documents,
     )
     data = data_loader.get_detect_gpt_data()
 
