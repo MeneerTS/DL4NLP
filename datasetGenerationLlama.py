@@ -99,17 +99,20 @@ def generate_text(args):
     load_dotenv()
     token = os.getenv("HF_TOKEN")
     # Set up the pipeline with the Hugging Face token (if needed)
+    tokenizer = AutoTokenizer.from_pretrained(
+    args.model_id, token=token
+    )
+    tokenizer.pad_token = tokenizer.eos_token
+
     pipe = pipeline(
         "text-generation",
         model=args.model_id,
+        tokenizer=tokenizer,
         model_kwargs={"torch_dtype": torch.bfloat16},
+        # model_kwargs={"torch_dtype": torch.float16}, 
         device=args.device,
         token=token,
     )
-    # tokenizer = AutoTokenizer.from_pretrained(
-    # "meta-llama/Meta-Llama-3.1-8B", token=token
-    # )
-    # tokenizer.pad_token = tokenizer.eos_token
     # model = LlamaForCausalLM.from_pretrained("meta-llama/Meta-Llama-3.1-8B", token=token)
 
     # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -196,7 +199,7 @@ def generate_text(args):
                 outputs = pipe(
                     messages,
                     max_new_tokens=args.max_length,
-                    eos_token_id=terminators,
+                    # eos_token_id=terminators,
                     do_sample=True,
                     temperature=args.temperature,
                     top_p=0.9,
@@ -207,13 +210,14 @@ def generate_text(args):
 
                 # Save the generated article in the destination folder
                 output_file_path = os.path.join(destination_dir, file_name)
-
+                # print(assistant_response)
+                # break
                 with open(output_file_path, "w", encoding="utf-8") as output_file:
-                    # output_file.write(f"{title}\n\n{assistant_response}")
-                    output_file.write(f"{title}\n\n{generated_text}")
+                    output_file.write(f"{title}\n\n{assistant_response}")
+                    # output_file.write(f"{title}\n\n{generated_text}")
 
         print(
-            f"Article generation complete! Files saved in '{args.target_folder}/machine/Llama-3.1-8B/{language}_files'."
+            f"Article generation complete! Files saved in '{args.target_folder}/machine/llama-3.1-8B/{language}_files'."
         )
 
 
@@ -224,5 +228,5 @@ if __name__ == "__main__":
     generate_text(args)
 
     print("Cleaning files...")
-    clean_gpt_articles(args.languages, f"{args.target_folder}/machine/{args.model_id}")
+    clean_llama_articles(args.languages, f"{args.target_folder}/machine/llama-3.1-8B")
     print("Cleaning done!\n")

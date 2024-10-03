@@ -43,7 +43,7 @@ def config():
         "--languages",
         default=["en", "id", "zh", "de", "ru"],
         type=str.lower,
-        margs="+",
+        nargs="+",
         help="The desired languages to generate for",
     )
     parser.add_argument(
@@ -163,8 +163,8 @@ def generate_text(args):
 if __name__ == "__main__":
 
     args = config()
-    set_seed_all(args.seed)
-    generate_text(args)
+    # set_seed_all(args.seed)
+    # generate_text(args)
 
     print("Cleaning files...")
     clean_gpt_articles(args.languages, f"{args.target_folder}/machine/{args.model_id}")
