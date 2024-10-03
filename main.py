@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import torch.nn.functional as F
 from tqdm import tqdm
 from multiprocessing.pool import ThreadPool
-from utils.dataloader import DetectionDataset
+from utils.dataLoader import DetectionDataset
 from utils.constants import COLORS, ID_PATTERN
 from sklearn.metrics import roc_curve, precision_recall_curve, auc
 from transformers import (
@@ -24,6 +24,7 @@ def config():
     parser.add_argument("--human_location", type=str, default="human")
     parser.add_argument("--ai_location", type=str, default="mistral")
     parser.add_argument("--sentence_mode", type=bool, default=False)
+    parser.add_argument("--n_samples", type=int, default=50)
     parser.add_argument("--n_sentences", type=int, default=5)
     parser.add_argument("--save_dir", type=str, default="", required=True)
     parser.add_argument("--use_cpu", action="store_true")
@@ -906,6 +907,7 @@ if __name__ == "__main__":
         ai_source=args.ai_location,
         sentence_mode=args.sentence_mode,
         n_sentences=args.n_sentences,
+        n_samples=args.n_samples,
     )
     data = data_loader.get_detect_gpt_data()
 
