@@ -11,6 +11,7 @@ class DetectionDataset(Dataset):
         language: str.lower = "en",
         human_source: str = HUMAN_PATH,
         ai_source: str = MISTRAL_PATH,
+        n_samples: int = 50,
         sentence_mode: bool = False,
         n_sentences: int = 1,
     ):
@@ -20,13 +21,17 @@ class DetectionDataset(Dataset):
         The valid options are the keys of LANG_DICT in `constants.py`.
         human_source (str): Where to get the human-written files.
         ai_source (str): The folder name of the AI data to use.
+        n_samples (int): The number of samples to take per half.
         sentence_mode (bool): If true, only take a sample sentence from the text.
         n_sentences (int): The number of sentences to sample (will be clipped if none exist).
         Note: the above parameter is especially important when handling files for DetectGPT,
         as it samples the text for 30 tokens (we do not want it to sample the original sentence).
         """
-        # Get the filenames from a reference folder
-        datalist = os.listdir(os.path.join(human_source, "en_files"))
+        # Check if n_samples if positive
+        assert n_samples > 0, "Please input a positive value for `n_samples`!"
+
+        # Get the filenames from the reference (human) folder
+        datalist = os.listdir(os.path.join(human_source, f"{language}_files"))
 
         # Generate the full datalist and labels based on the folder locations
         # (i.e., if in the "human" folder, return label 0, else 1)
@@ -34,7 +39,7 @@ class DetectionDataset(Dataset):
         ai_path_base = os.path.join(ai_source, f"{language}_files")
 
         self.real_paths, self.ai_paths, self.data = [], [], []
-        for filename in datalist:
+        for filename in datalist[:n_samples]:
 
             real_path_full = os.path.join(real_path_base, filename)
             ai_path_full = os.path.join(ai_path_base, filename)
