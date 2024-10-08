@@ -1,4 +1,4 @@
-import torch, os, random, argparse, datetime, json, functools, time
+import torch, os, random, argparse, datetime, json, functools, time, jieba
 import numpy as np
 import matplotlib.pyplot as plt
 import torch.nn.functional as F
@@ -98,9 +98,17 @@ def load_mask_model():
     print(f"DONE ({time.time() - start:.2f}s)")
 
 
-def tokenize_and_mask(text, span_length, pct, ceil_pct=False):
+def tokenize_and_mask(
+    text, span_length, pct, ceil_pct=False, language: str.lower = "en"
+):
 
-    tokens = text.split(" ")
+    # Updated token extractor to account for Chinese
+    if language == "zh":
+        tokens = list(jieba.cut(text))
+
+    else:
+        tokens = text.split(" ")
+
     mask_string = "<<<mask>>>"
 
     n_spans = pct * len(tokens) / (span_length + args.buffer_size * 2)
@@ -192,10 +200,12 @@ def apply_extracted_fills(masked_texts, extracted_fills):
     return texts
 
 
-def perturb_texts_(texts, span_length, pct, ceil_pct=False):
+def perturb_texts_(texts, span_length, pct, ceil_pct=False, language: str.lower = "en"):
 
     if not args.random_fills:
-        masked_texts = [tokenize_and_mask(x, span_length, pct, ceil_pct) for x in texts]
+        masked_texts = [
+            tokenize_and_mask(x, span_length, pct, ceil_pct, language) for x in texts
+        ]
         raw_fills = replace_masks(masked_texts)
         extracted_fills = extract_fills(raw_fills)
         perturbed_texts = apply_extracted_fills(masked_texts, extracted_fills)
@@ -278,7 +288,11 @@ def perturb_texts(texts, span_length, pct, ceil_pct=False):
     for i in tqdm(range(0, len(texts), chunk_size), desc="Applying perturbations"):
         outputs.extend(
             perturb_texts_(
-                texts[i : i + chunk_size], span_length, pct, ceil_pct=ceil_pct
+                texts[i : i + chunk_size],
+                span_length,
+                pct,
+                ceil_pct=ceil_pct,
+                language=args.language,
             )
         )
     return outputs
@@ -893,9 +907,7 @@ if __name__ == "__main__":
 
     else:
         n_positions = 512
-    preproc_tokenizer = AutoTokenizer.from_pretrained(
-        "t5-small", model_max_length=512, cache_dir=cache_dir
-    )
+
     mask_tokenizer = AutoTokenizer.from_pretrained(
         mask_filling_model_name, model_max_length=n_positions, cache_dir=cache_dir
     )

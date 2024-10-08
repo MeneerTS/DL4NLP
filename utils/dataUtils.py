@@ -217,7 +217,7 @@ def count_tokens_in_document(text, lang_code, use_period: bool = True):
     """
     # For Chinese
     if lang_code == "zh":
-        tokens = jieba.lcut(text)
+        tokens = jieba.cut(text)
     # For Japanese
     elif lang_code == "ja":
         tagger = fugashi.Tagger()
