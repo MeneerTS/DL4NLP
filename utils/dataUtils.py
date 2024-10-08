@@ -317,3 +317,20 @@ def extract_title_and_sentence(text: str, language: str = "en"):
     )
 
     return title, sentence
+
+
+def tokenize_zh(text):
+
+    tokens = list(jieba.cut(text))
+
+    # Step 2: Post-process tokens to merge punctuation with the previous token
+    merged_tokens = []
+    for i, token in enumerate(tokens):
+        if i > 0 and re.match(
+            r"[^\w\s]", token
+        ):  # Check if token is a punctuation mark
+            merged_tokens[-1] += token  # Merge with the previous token
+        else:
+            merged_tokens.append(token)
+
+    return merged_tokens

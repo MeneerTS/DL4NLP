@@ -1,8 +1,9 @@
-import torch, os, random, argparse, datetime, json, functools, time, jieba
+import torch, os, random, argparse, datetime, json, functools, time
 import numpy as np
 import matplotlib.pyplot as plt
 import torch.nn.functional as F
 from tqdm import tqdm
+from utils.dataUtils import tokenize_zh
 from multiprocessing.pool import ThreadPool
 from utils.dataLoader import DetectionDataset
 from utils.constants import COLORS, ID_PATTERN
@@ -104,7 +105,7 @@ def tokenize_and_mask(
 
     # Updated token extractor to account for Chinese
     if language == "zh":
-        tokens = list(jieba.cut(text))
+        tokens = tokenize_zh(text)
 
     else:
         tokens = text.split(" ")
