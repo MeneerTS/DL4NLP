@@ -218,7 +218,7 @@ def perturb_texts_(texts, span_length, pct, ceil_pct=False, language: str.lower 
                 f"WARNING: {len(idxs)} texts have no fills. Trying again [attempt {attempts}]."
             )
             masked_texts = [
-                tokenize_and_mask(x, span_length, pct, ceil_pct)
+                tokenize_and_mask(x, span_length, pct, ceil_pct, language)
                 for idx, x in enumerate(texts)
                 if idx in idxs
             ]
@@ -261,7 +261,8 @@ def perturb_texts_(texts, span_length, pct, ceil_pct=False, language: str.lower 
 
         else:
             masked_texts = [
-                tokenize_and_mask(x, span_length, pct, ceil_pct) for x in texts
+                tokenize_and_mask(x, span_length, pct, ceil_pct, language)
+                for x in texts
             ]
             perturbed_texts = masked_texts
             # replace each <extra_id_*> with args.span_length random words from FILL_DICTIONARY
