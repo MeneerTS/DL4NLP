@@ -217,7 +217,7 @@ def count_tokens_in_document(text, lang_code, use_period: bool = True):
     """
     # For Chinese
     if lang_code == "zh":
-        tokens = jieba.lcut(text)
+        tokens = jieba.cut(text)
     # For Japanese
     elif lang_code == "ja":
         tagger = fugashi.Tagger()
@@ -317,3 +317,21 @@ def extract_title_and_sentence(text: str, language: str = "en"):
     )
 
     return title, sentence
+
+
+def tokenize_zh(text):
+
+    # Split text using the jieba tokenizer
+    tokens = list(jieba.cut(text))
+
+    # Post-process tokens to merge punctuation with the previous token
+    merged_tokens = []
+    for i, token in enumerate(tokens):
+
+        if i > 0 and re.match(r"[^\w\s]", token):  # Check if token == punctuation mark
+            merged_tokens[-1] += token  # Merge with the previous token
+
+        else:
+            merged_tokens.append(token)
+
+    return merged_tokens

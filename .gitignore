@@ -179,3 +179,5 @@ token.json
 test.*
 done.txt
 /old
+/out
+/cache2
