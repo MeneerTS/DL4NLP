@@ -6,19 +6,19 @@ Repository for the Deep Learning for Natural Language Processing course group pr
 
 To run this code, first do the following:
 
-```
+```sh
 git clone MeneerTS/DL4NLP
 ```
 
 Afterwards, you need to install the dependencies:
 
-```
+```sh
 conda env create -f environment.yml
 ```
 
 Use the below instead if you want to install with CUDA compatibility:
 
-```
+```sh
 conda env create -f environment_gpu.yml
 ```
 
@@ -50,7 +50,7 @@ python get_base_data.py
 Alternatively, you can run it from the notebook [here](notebooks/example.ipynb) (alongside an overview of the dataloader).
 Afterwards, run any of the following for the dataset(s) you want:
 
-```
+```sh
 python datasetGenerationLlama.py \
     --model_id "meta-llama/Meta-Llama-3.1-8B-Instruct" \
     --device "cuda" \
@@ -60,14 +60,14 @@ python datasetGenerationLlama.py \
     --target_folder "" # Where you want the Llama files to be located in
 ```
 
-```
+```sh
 python datasetGenerationGPT.py
     --model_id "gpt-4o-mini" \
     --languages "en" "id" "zh" "de" "ru" \
     --target_folder "" # Where you want the GPT files to be located in
 ```
 
-```
+```sh
 python datasetGenerationMistral.py \
     --model_id "mistralai/Mistral-Small-Instruct-2409" \
     --device "cuda" \
@@ -77,7 +77,7 @@ python datasetGenerationMistral.py \
     --target_folder "" # Where you want the Mistral files to be located in
 ```
 
-```
+```sh
 python datasetGenerationQwen.py \
     --model_id "Qwen/Qwen2.5-32B-Instruct" \
     --device "cuda" \
