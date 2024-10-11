@@ -170,6 +170,8 @@ data/documents.tgz
 /mistral_clean
 /qwen
 /qwen_clean
+/gpt-4o-mini 
+/llama-3.1-8B
 
 # Config files
 /.vscode

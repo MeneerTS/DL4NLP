@@ -55,7 +55,7 @@ python datasetGenerationLlama.py \
     --model_id "meta-llama/Meta-Llama-3.1-8B-Instruct" \
     --device "cuda" \
     --languages "en" "id" "zh" "de" "ru" \
-    --max_length 2000 \
+    --max_length 4000 \
     --temperature 0.6 \
     --target_folder "" # Where you want the Llama files to be located in
 ```
@@ -72,7 +72,7 @@ python datasetGenerationMistral.py \
     --model_id "mistralai/Mistral-Small-Instruct-2409" \
     --device "cuda" \
     --languages "en" "id" "zh" "de" "ru" \
-    --max_length 2000 \
+    --max_length 4000 \
     --temperature 0.6 \
     --target_folder "" # Where you want the Mistral files to be located in
 ```
@@ -82,7 +82,7 @@ python datasetGenerationQwen.py \
     --model_id "Qwen/Qwen2.5-32B-Instruct" \
     --device "cuda" \
     --languages "en" "id" "zh" "de" "ru" \
-    --max_length 2000 \
+    --max_length 4000 \
     --temperature 0.6 \
     --target_folder "" # Where you want the Qwen files to be located in
 ```
@@ -105,8 +105,18 @@ _Also, ensure that the folders containing the data are in the same directory as 
 
 To evaluate the generated datasets, run the following:
 
-```
-python main.py
+```sh
+# Adjust the variables based on which experiment you want to do 
+python -u main.py \
+    --save_dir "..." \
+    --ai_location "$current_ai_location" \
+    --sentence_mode True \
+    --n_sentences 15 \
+    --language "ru" \
+    --base_model_name "ai-forever/mGPT" \
+    --mask_filling_model_name "google/mt5-base" \
+    --n_documents 25 \
+    --cache_dir "..."
 ```
 
 This script was adapted from the [DetectGPT Repository](https://github.com/eric-mitchell/detect-gpt), which can be cited through the following:
